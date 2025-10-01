@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import NewsletterSignupInline from './NewsletterSignupInline';
 import { 
   Facebook, 
   Twitter, 
@@ -150,16 +151,7 @@ const Footer = () => {
             <p className="text-gray-400 mb-6">
               Subscribe to our newsletter for latest course updates and tech insights.
             </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-indigo-500 text-white placeholder-gray-400"
-              />
-              <button className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                Subscribe
-              </button>
-            </div>
+            <NewsletterSignupInline />
           </div>
         </div>
       </div>

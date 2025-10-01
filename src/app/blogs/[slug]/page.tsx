@@ -2,9 +2,11 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 import { getBlogBySlug, getBlogCategories } from '@/lib/database';
-import { Calendar, User, Eye, ArrowLeft, Copy } from 'lucide-react';
+import { Calendar, User, Eye, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import BlogActions from '@/components/BlogActions';
 
 interface BlogPageProps {
   params: Promise<{ slug: string }>;
@@ -85,6 +87,7 @@ export default async function BlogPage({ params, searchParams }: BlogPageProps) 
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AnalyticsTracker page={`/blogs/${blog.slug}`} />
       <Header />
       
       {/* Back Button */}
@@ -151,28 +154,7 @@ export default async function BlogPage({ params, searchParams }: BlogPageProps) 
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-3">
-                  <a
-                    href={`#enroll`}
-                    className="text-indigo-600 hover:text-indigo-700 font-semibold"
-                  >
-                    Enroll Now
-                  </a>
-                  <button
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
-                        alert('URL copied to clipboard');
-                      } catch {
-                        alert('Failed to copy URL');
-                      }
-                    }}
-                    className="flex items-center space-x-2 text-indigo-600 hover:text-indigo-700 transition-colors"
-                  >
-                    <Copy className="w-5 h-5" />
-                    <span>Copy URL</span>
-                  </button>
-                </div>
+                <BlogActions />
               </div>
 
               {/* Tags */}

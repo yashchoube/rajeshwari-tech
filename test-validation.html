@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Featured Image Validation Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Different URL Formats</h2>
+        <button onclick="testValidation()">Test Validation</button>
+        <div id="testResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testValidation() {
+            const testCases = [
+                {
+                    name: "Relative Path (Current Issue)",
+                    data: {
+                        title: "Test Blog",
+                        excerpt: "This is a test blog excerpt that is long enough to pass validation",
+                        content: "This is a test blog content that is long enough to pass validation requirements and should work fine for testing purposes.",
+                        author: "Test Author",
+                        category: "Technology",
+                        featuredImage: "/uploads/blogs/eb69bea0-fc3f-4251-bc19-749b5acdb66b.png"
+                    }
+                },
+                {
+                    name: "Absolute URL",
+                    data: {
+                        title: "Test Blog 2",
+                        excerpt: "This is a test blog excerpt that is long enough to pass validation",
+                        content: "This is a test blog content that is long enough to pass validation requirements and should work fine for testing purposes.",
+                        author: "Test Author",
+                        category: "Technology",
+                        featuredImage: "https://example.com/image.jpg"
+                    }
+                },
+                {
+                    name: "Data URL",
+                    data: {
+                        title: "Test Blog 3",
+                        excerpt: "This is a test blog excerpt that is long enough to pass validation",
+                        content: "This is a test blog content that is long enough to pass validation requirements and should work fine for testing purposes.",
+                        author: "Test Author",
+                        category: "Technology",
+                        featuredImage: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                    }
+                },
+                {
+                    name: "Empty Featured Image",
+                    data: {
+                        title: "Test Blog 4",
+                        excerpt: "This is a test blog excerpt that is long enough to pass validation",
+                        content: "This is a test blog content that is long enough to pass validation requirements and should work fine for testing purposes.",
+                        author: "Test Author",
+                        category: "Technology",
+                        featuredImage: ""
+                    }
+                },
+                {
+                    name: "Invalid URL",
+                    data: {
+                        title: "Test Blog 5",
+                        excerpt: "This is a test blog excerpt that is long enough to pass validation",
+                        content: "This is a test blog content that is long enough to pass validation requirements and should work fine for testing purposes.",
+                        author: "Test Author",
+                        category: "Technology",
+                        featuredImage: "not-a-valid-url"
+                    }
+                }
+            ];
+
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing validation...';
+
+            let results = '<h3>Validation Test Results:</h3>';
+
+            for (const testCase of testCases) {
+                try {
+                    const response = await fetch('http://localhost:3001/api/blogs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(testCase.data)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        results += `<div class="success">✅ ${testCase.name}: PASSED</div>`;
+                    } else {
+                        results += `<div class="error">❌ ${testCase.name}: FAILED - ${result.error || result.errors?.join(', ') || 'Unknown error'}</div>`;
+                    }
+                } catch (error) {
+                    results += `<div class="error">❌ ${testCase.name}: ERROR - ${error.message}</div>`;
+                }
+            }
+
+            resultDiv.innerHTML = results;
+        }
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { Clock, Users, Star, ArrowRight, Check, Download } from 'lucide-react';
+import { Clock, Users, Star, ArrowRight, Check, Download, Play } from 'lucide-react';
 import { Course } from '@/data/courses';
 import EnrollModal from './EnrollModal';
 
@@ -14,6 +14,11 @@ interface CourseCardProps {
 
 const CourseCard = ({ course, index }: CourseCardProps) => {
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [enrolled, setEnrolled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const key = `enrolled:${course.id}`;
+    return localStorage.getItem(key) === 'true';
+  });
 
   const handleDownloadSyllabus = async () => {
     try {
@@ -186,12 +191,15 @@ const CourseCard = ({ course, index }: CourseCardProps) => {
                 <span>View Details</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
-              <button
-                onClick={() => setIsEnrollModalOpen(true)}
-                className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-full font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm"
-              >
-                Enroll Now
-              </button>
+              {!enrolled && (
+                <button
+                  onClick={() => setIsEnrollModalOpen(true)}
+                  className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 rounded-full font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm flex items-center justify-center space-x-2"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Enroll Now</span>
+                </button>
+              )}
             </div>
             <button
               onClick={handleDownloadSyllabus}

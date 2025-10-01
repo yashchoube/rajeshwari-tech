@@ -1,23 +1,58 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Smile, Heading1, Heading2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Smile, Heading1, Heading2, AlignLeft, AlignCenter, AlignRight, Quote, Code, Palette, Type, Upload, Table, Strikethrough, Subscript, Superscript, Indent, Outdent, Undo, Redo, Save } from 'lucide-react';
 
 interface RichTextEditorProps {
   value: string;
   onChange: (html: string) => void;
 }
 
-const emojis = ['😀','😁','😂','😎','😍','🔥','🚀','🎉','✅','⭐'];
+const emojis = [
+  '😀','😁','😂','😎','😍','🔥','🚀','🎉','✅','⭐','💡','📝','🎯','🌟','💻','📚','🎨','⚡','🎪','📊','🔧','💪','🎭','🌈','📈','💎',
+  '👍','👎','👏','🙌','👋','🤝','✌️','🤞','🤟','🤘','👌','🤏','✋','🖐️','🖖','👈','👉','👆','🖕','👇','☝️','👊','✊','🤛','🤜',
+  '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️',
+  '🎂','🍰','🧁','🥧','🍕','🍔','🌭','🥪','🌮','🌯','🥙','🧆','🥚','🍳','🥞','🧇','🥓','🥩','🍗','🍖','🦴','🌽','🍅','🍄','🥕','🌶️',
+  '⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🎱','🪀','🏓','🏸','🏒','🏑','🥍','🏏','🪃','🥅','⛳','🪁','🏹','🎣','🤿','🥊','🥋','🎽',
+  '📱','⌨️','🖥️','🖨️','🖱️','🖲️','💽','💾','💿','📀','📼','📷','📸','📹','🎥','📽️','🎞️','📞','☎️','📟','📠','📺','📻','🎙️'
+];
+
+const colors = [
+  { name: 'Black', value: '#000000' },
+  { name: 'Red', value: '#ef4444' },
+  { name: 'Green', value: '#22c55e' },
+  { name: 'Blue', value: '#3b82f6' },
+  { name: 'Purple', value: '#a855f7' },
+  { name: 'Orange', value: '#f97316' },
+  { name: 'Pink', value: '#ec4899' },
+  { name: 'Gray', value: '#6b7280' },
+];
 
 export default function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showEmojis, setShowEmojis] = useState(false);
+  const [showColors, setShowColors] = useState(false);
 
   useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value || '';
     }
   }, [value]);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showEmojis && !(event.target as Element).closest('.emoji-picker')) {
+        setShowEmojis(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmojis]);
 
   const exec = (command: string, valueArg?: string) => {
     document.execCommand(command, false, valueArg);
@@ -37,16 +72,330 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
   };
 
   const onUploadImage = async (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      exec('insertImage', dataUrl);
-      // Optionally apply a default width via wrapping span style
-      if (editorRef.current) {
-        // No-op; images inserted will render; user can resize in browser via drag if supported
+    console.log('onUploadImage called with file:', file.name, file.type, file.size);
+    
+    if (!file.type.startsWith('image/')) {
+      console.log('Invalid file type:', file.type);
+      alert('Please select an image file');
+      return;
+    }
+    
+    console.log('File validation passed, starting upload...');
+    
+    // Show loading state
+    const loadingHtml = `
+      <div class="image-loading" style="
+        text-align: center; 
+        margin: 20px 0; 
+        padding: 40px; 
+        background: #f8fafc; 
+        border: 2px dashed #cbd5e1; 
+        border-radius: 8px;
+        color: #64748b;
+      ">
+        <div style="font-size: 24px; margin-bottom: 8px;">📤</div>
+        <div style="font-weight: 500;">Uploading image...</div>
+        <div style="font-size: 12px; margin-top: 4px;">Please wait</div>
+      </div>
+    `;
+    
+    exec('insertHTML', loadingHtml);
+    
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Create a more structured image insertion with better styling and controls
+        const imgHtml = `
+          <div class="image-container" style="
+            text-align: center; 
+            margin: 20px 0; 
+            position: relative; 
+            display: block; 
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            background: #fafafa;
+          ">
+            <div class="image-wrapper" style="
+              position: relative;
+              display: inline-block;
+              max-width: 100%;
+              border-radius: 8px;
+              overflow: hidden;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            ">
+              <img 
+                src="${result.url}" 
+                alt="Uploaded image" 
+                style="
+                  max-width: 100%; 
+                  height: auto; 
+                  display: block;
+                  cursor: move;
+                  transition: transform 0.2s ease;
+                "
+                draggable="true"
+                onload="
+                  this.style.opacity='1';
+                  this.parentElement.parentElement.querySelector('.image-loading').style.display='none';
+                "
+                onerror="
+                  this.style.display='none'; 
+                  this.parentElement.parentElement.querySelector('.image-error').style.display='block';
+                  this.parentElement.parentElement.querySelector('.image-loading').style.display='none';
+                "
+                onmouseenter="
+                  this.parentElement.querySelector('.image-controls').style.display='flex';
+                "
+                onmouseleave="
+                  this.parentElement.querySelector('.image-controls').style.display='none';
+                "
+                onmousedown="
+                  this.style.cursor='grabbing';
+                  this.parentElement.style.transform='scale(1.02)';
+                "
+                onmouseup="
+                  this.style.cursor='move';
+                  this.parentElement.style.transform='scale(1)';
+                "
+              />
+              
+                      <!-- Image Controls Overlay -->
+                      <div class="image-controls" style="
+                        position: absolute;
+                        top: 8px;
+                        right: 8px;
+                        display: none;
+                        gap: 4px;
+                        z-index: 1000;
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        background: rgba(0,0,0,0.1);
+                        padding: 4px;
+                        border-radius: 6px;
+                        backdrop-filter: blur(4px);
+                      " onmouseenter="this.style.display='flex'" onmouseleave="this.style.display='none'">
+                        <button onclick="
+                          const img = this.closest('.image-wrapper').querySelector('img');
+                          const currentWidth = img.offsetWidth;
+                          const newWidth = Math.min(currentWidth * 1.2, 1200);
+                          img.style.width = newWidth + 'px';
+                          img.style.height = 'auto';
+                          img.style.maxWidth = '100%';
+                        " style="
+                          background: rgba(0,0,0,0.9);
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          padding: 8px 12px;
+                          font-size: 12px;
+                          cursor: pointer;
+                          font-weight: bold;
+                          min-width: 36px;
+                          height: 36px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        " title="Zoom In">+</button>
+                        <button onclick="
+                          const img = this.closest('.image-wrapper').querySelector('img');
+                          const currentWidth = img.offsetWidth;
+                          const newWidth = Math.max(currentWidth * 0.8, 50);
+                          img.style.width = newWidth + 'px';
+                          img.style.height = 'auto';
+                          img.style.maxWidth = '100%';
+                        " style="
+                          background: rgba(0,0,0,0.9);
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          padding: 8px 12px;
+                          font-size: 12px;
+                          cursor: pointer;
+                          font-weight: bold;
+                          min-width: 36px;
+                          height: 36px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        " title="Zoom Out">-</button>
+                        <button onclick="
+                          const img = this.closest('.image-wrapper').querySelector('img');
+                          const currentRotation = img.style.transform.includes('rotate') ? 
+                            parseInt(img.style.transform.match(/rotate\\((-?\\d+)deg\\)/)?.[1] || '0') : 0;
+                          img.style.transform = \`rotate(\${currentRotation + 90}deg)\`;
+                        " style="
+                          background: rgba(0,0,0,0.9);
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          padding: 8px 12px;
+                          font-size: 12px;
+                          cursor: pointer;
+                          font-weight: bold;
+                          min-width: 36px;
+                          height: 36px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        " title="Rotate">↻</button>
+                        <button onclick="
+                          const img = this.closest('.image-wrapper').querySelector('img');
+                          img.style.width = '100%';
+                          img.style.height = 'auto';
+                          img.style.transform = 'rotate(0deg)';
+                        " style="
+                          background: rgba(59,130,246,0.9);
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          padding: 8px 12px;
+                          font-size: 12px;
+                          cursor: pointer;
+                          font-weight: bold;
+                          min-width: 36px;
+                          height: 36px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        " title="Reset">⟲</button>
+                        <button onclick="
+                          if(confirm('Delete this image?')) {
+                            this.closest('.image-container').remove();
+                          }
+                        " style="
+                          background: rgba(220,38,38,0.9);
+                          color: white;
+                          border: none;
+                          border-radius: 4px;
+                          padding: 8px 12px;
+                          font-size: 12px;
+                          cursor: pointer;
+                          font-weight: bold;
+                          min-width: 36px;
+                          height: 36px;
+                          display: flex;
+                          align-items: center;
+                          justify-content: center;
+                        " title="Delete">×</button>
+                      </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="image-loading" style="
+              display: block;
+              padding: 20px;
+              background: #f8fafc;
+              border-radius: 8px;
+              color: #64748b;
+              text-align: center;
+            ">
+              <div style="font-size: 24px; margin-bottom: 8px;">📤</div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Uploading image...</div>
+              <div style="font-size: 12px;">Please wait</div>
+            </div>
+            
+            <!-- Error State -->
+            <div class="image-error" style="
+              display: none;
+              padding: 20px;
+              background: #fef2f2;
+              border-radius: 8px;
+              color: #dc2626;
+              text-align: center;
+            ">
+              <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Failed to load image</div>
+              <div style="font-size: 12px;">Please check the image URL or try uploading again</div>
+            </div>
+            
+            <!-- Success Info -->
+            <div class="image-info" style="
+              margin-top: 8px;
+              font-size: 12px;
+              color: #6b7280;
+              text-align: center;
+              display: none;
+            " onmouseenter="this.style.display='block'" onmouseleave="this.style.display='none'">
+              ✅ Image uploaded successfully • Drag to move • Hover for controls
+            </div>
+          </div>
+        `;
+        
+        // Replace the loading HTML with the actual image
+        const editor = editorRef.current;
+        if (editor) {
+          const loadingElement = editor.querySelector('.image-loading');
+          if (loadingElement) {
+            loadingElement.outerHTML = imgHtml;
+          } else {
+            exec('insertHTML', imgHtml);
+          }
+        }
+        
+        // Focus back to editor
+        if (editorRef.current) {
+          editorRef.current.focus();
+        }
+      } else {
+        // Replace loading with error
+        const editor = editorRef.current;
+        if (editor) {
+          const loadingElement = editor.querySelector('.image-loading');
+          if (loadingElement) {
+            loadingElement.outerHTML = `
+              <div class="image-error" style="
+                text-align: center; 
+                margin: 20px 0; 
+                padding: 20px; 
+                background: #fef2f2; 
+                border: 2px solid #fecaca; 
+                border-radius: 8px;
+                color: #dc2626;
+              ">
+                <div style="font-size: 24px; margin-bottom: 8px;">❌</div>
+                <div style="font-weight: 500; margin-bottom: 4px;">Upload failed</div>
+                <div style="font-size: 12px;">${result.error || 'Unknown error'}</div>
+              </div>
+            `;
+          }
+        }
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Upload error:', error);
+      // Replace loading with error
+      const editor = editorRef.current;
+      if (editor) {
+        const loadingElement = editor.querySelector('.image-loading');
+        if (loadingElement) {
+          loadingElement.outerHTML = `
+            <div class="image-error" style="
+              text-align: center; 
+              margin: 20px 0; 
+              padding: 20px; 
+              background: #fef2f2; 
+              border: 2px solid #fecaca; 
+              border-radius: 8px;
+              color: #dc2626;
+            ">
+              <div style="font-size: 24px; margin-bottom: 8px;">❌</div>
+              <div style="font-weight: 500; margin-bottom: 4px;">Upload failed</div>
+              <div style="font-size: 12px;">Network error occurred</div>
+            </div>
+          `;
+        }
+      }
+    }
   };
 
   const insertEmoji = (emoji: string) => {
@@ -57,67 +406,713 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
     exec('formatBlock', `H${level}`);
   };
 
+  const applyColor = (color: string) => {
+    exec('foreColor', color);
+    setShowColors(false);
+  };
+
+  const insertQuote = () => {
+    exec('formatBlock', 'blockquote');
+  };
+
+  const insertCode = () => {
+    exec('formatBlock', 'pre');
+  };
+
+  const alignText = (alignment: string) => {
+    exec('justify' + alignment);
+  };
+
+  const insertTable = () => {
+    const tableHtml = `
+      <table style="border-collapse: collapse; width: 100%; margin: 16px 0;">
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">Cell 1</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">Cell 2</td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 8px;">Cell 3</td>
+          <td style="border: 1px solid #ddd; padding: 8px;">Cell 4</td>
+        </tr>
+      </table>
+    `;
+    exec('insertHTML', tableHtml);
+  };
+
+  const insertStrikethrough = () => {
+    exec('strikeThrough');
+  };
+
+  const insertSubscript = () => {
+    exec('subscript');
+  };
+
+  const insertSuperscript = () => {
+    exec('superscript');
+  };
+
+  const indentText = () => {
+    exec('indent');
+  };
+
+  const outdentText = () => {
+    exec('outdent');
+  };
+
+  const undoAction = () => {
+    exec('undo');
+  };
+
+  const redoAction = () => {
+    exec('redo');
+  };
+
+  const insertCodeBlock = () => {
+    const codeHtml = `
+      <pre style="background: #f4f4f4; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 16px 0;">
+        <code style="font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.5;">
+          // Your code here
+          function example() {
+            return "Hello World!";
+          }
+        </code>
+      </pre>
+    `;
+    exec('insertHTML', codeHtml);
+  };
+
+  const insertHorizontalRule = () => {
+    exec('insertHorizontalRule');
+  };
+
+  const insertSpecialChar = (char: string) => {
+    exec('insertText', char);
+  };
+
   return (
-    <div className="border rounded-md">
-      <div className="flex flex-wrap items-center gap-2 p-2 border-b bg-gray-50">
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={() => exec('bold')} title="Bold">
-          <Bold className="w-4 h-4" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={() => exec('italic')} title="Italic">
-          <Italic className="w-4 h-4" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={() => exec('underline')} title="Underline">
-          <Underline className="w-4 h-4" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={() => exec('insertUnorderedList')} title="Bulleted list">
-          <List className="w-4 h-4" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={() => exec('insertOrderedList')} title="Numbered list">
-          <ListOrdered className="w-4 h-4" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={insertLink} title="Insert link">
-          <LinkIcon className="w-4 h-4" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={insertImage} title="Insert image from URL">
-          <ImageIcon className="w-4 h-4" />
-        </button>
-        <label className="p-1 hover:bg-gray-100 rounded cursor-pointer text-xs font-medium border px-2">
-          Upload
+    <div className="border rounded-lg shadow-sm">
+      {/* Enhanced Toolbar */}
+      <div className="flex flex-wrap items-center gap-1 p-3 border-b bg-gradient-to-r from-gray-50 to-gray-100">
+        {/* Undo/Redo */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={undoAction} title="Undo">
+            <Undo className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={redoAction} title="Redo">
+            <Redo className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Text Formatting */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => exec('bold')} title="Bold">
+            <Bold className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => exec('italic')} title="Italic">
+            <Italic className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => exec('underline')} title="Underline">
+            <Underline className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertStrikethrough} title="Strikethrough">
+            <Strikethrough className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Subscript/Superscript */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertSubscript} title="Subscript">
+            <Subscript className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertSuperscript} title="Superscript">
+            <Superscript className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Headings */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => applyHeading(1)} title="Heading 1">
+            <Heading1 className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => applyHeading(2)} title="Heading 2">
+            <Heading2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Lists */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => exec('insertUnorderedList')} title="Bulleted list">
+            <List className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => exec('insertOrderedList')} title="Numbered list">
+            <ListOrdered className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Alignment */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => alignText('Left')} title="Align Left">
+            <AlignLeft className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => alignText('Center')} title="Align Center">
+            <AlignCenter className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={() => alignText('Right')} title="Align Right">
+            <AlignRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Special Blocks */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertQuote} title="Quote">
+            <Quote className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertCodeBlock} title="Code Block">
+            <Code className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertHorizontalRule} title="Horizontal Line">
+            <Type className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertTable} title="Insert Table">
+            <Table className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Indentation */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={indentText} title="Indent">
+            <Indent className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={outdentText} title="Outdent">
+            <Outdent className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Links and Media */}
+        <div className="flex items-center gap-1 border-r pr-2 mr-2">
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertLink} title="Insert Link">
+            <LinkIcon className="w-4 h-4" />
+          </button>
+          <button className="p-2 hover:bg-white rounded-md transition-colors" type="button" onClick={insertImage} title="Insert Image URL">
+            <ImageIcon className="w-4 h-4" />
+          </button>
+          <button 
+            className="p-2 hover:bg-white rounded-md transition-colors flex items-center gap-1 text-sm font-medium"
+            type="button"
+            onClick={() => {
+              console.log('Upload button clicked');
+              if (fileInputRef.current) {
+                console.log('File input found, triggering click');
+                fileInputRef.current.click();
+              } else {
+                console.error('File input ref not found');
+              }
+            }}
+            title="Upload Image"
+          >
+            <Upload className="w-4 h-4" />
+            Upload
+          </button>
           <input
+            ref={fileInputRef}
             type="file"
             accept="image/*"
             className="hidden"
             onChange={(e) => {
+              console.log('File input changed:', e.target.files);
               const f = e.target.files?.[0];
-              if (f) onUploadImage(f);
+              if (f) {
+                console.log('File selected:', f.name, f.type, f.size);
+                onUploadImage(f);
+              } else {
+                console.log('No file selected');
+              }
               e.currentTarget.value = '';
             }}
           />
-        </label>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={() => applyHeading(1)} title="Heading 1">
-          <Heading1 className="w-4 h-4" />
-        </button>
-        <button className="p-1 hover:bg-gray-100 rounded" type="button" onClick={() => applyHeading(2)} title="Heading 2">
-          <Heading2 className="w-4 h-4" />
-        </button>
-        <div className="relative">
-          <div className="flex items-center gap-1">
-            <Smile className="w-4 h-4 text-gray-600" />
-            {emojis.map((e) => (
-              <button key={e} type="button" className="text-base leading-none" onClick={() => insertEmoji(e)} aria-label={`Insert ${e}`}>
-                {e}
-              </button>
-            ))}
-          </div>
         </div>
+
+        {/* Color Picker */}
+        <div className="relative">
+          <button 
+            className="p-2 hover:bg-white rounded-md transition-colors" 
+            type="button" 
+            onClick={() => setShowColors(!showColors)} 
+            title="Text Color"
+          >
+            <Palette className="w-4 h-4" />
+          </button>
+          {showColors && (
+            <div className="absolute top-full left-0 mt-1 bg-white border rounded-lg shadow-lg p-2 z-10">
+              <div className="grid grid-cols-4 gap-1">
+                {colors.map((color) => (
+                  <button
+                    key={color.value}
+                    className="w-6 h-6 rounded border hover:scale-110 transition-transform"
+                    style={{ backgroundColor: color.value }}
+                    onClick={() => applyColor(color.value)}
+                    title={color.name}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+                {/* Special Characters */}
+                <div className="flex items-center gap-1 border-r pr-2 mr-2">
+                  <button 
+                    className="p-2 hover:bg-white rounded-md transition-colors" 
+                    type="button" 
+                    onClick={() => insertSpecialChar('©')} 
+                    title="Copyright"
+                  >
+                    ©
+                  </button>
+                  <button 
+                    className="p-2 hover:bg-white rounded-md transition-colors" 
+                    type="button" 
+                    onClick={() => insertSpecialChar('®')} 
+                    title="Registered"
+                  >
+                    ®
+                  </button>
+                  <button 
+                    className="p-2 hover:bg-white rounded-md transition-colors" 
+                    type="button" 
+                    onClick={() => insertSpecialChar('™')} 
+                    title="Trademark"
+                  >
+                    ™
+                  </button>
+                  <button 
+                    className="p-2 hover:bg-white rounded-md transition-colors" 
+                    type="button" 
+                    onClick={() => insertSpecialChar('€')} 
+                    title="Euro"
+                  >
+                    €
+                  </button>
+                  <button 
+                    className="p-2 hover:bg-white rounded-md transition-colors" 
+                    type="button" 
+                    onClick={() => insertSpecialChar('£')} 
+                    title="Pound"
+                  >
+                    £
+                  </button>
+                  <button 
+                    className="p-2 hover:bg-white rounded-md transition-colors" 
+                    type="button" 
+                    onClick={() => insertSpecialChar('¥')} 
+                    title="Yen"
+                  >
+                    ¥
+                  </button>
+                </div>
+
+                {/* Emojis */}
+                <div className="relative">
+                  <button 
+                    className="p-2 hover:bg-white rounded-md transition-colors" 
+                    type="button" 
+                    onClick={() => setShowEmojis(!showEmojis)} 
+                    title="Emojis"
+                  >
+                    <Smile className="w-4 h-4" />
+                  </button>
+                  {showEmojis && (
+                    <>
+                      {/* Backdrop */}
+                      <div 
+                        className="fixed inset-0 bg-black bg-opacity-25 z-[9998]"
+                        onClick={() => setShowEmojis(false)}
+                      />
+                      {/* Emoji Picker Modal */}
+                      <div className="emoji-picker fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border rounded-lg shadow-2xl p-6 z-[9999] max-w-md max-h-96 overflow-y-auto" style={{boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'}}>
+                        <div className="flex items-center justify-between mb-4">
+                          <span className="text-lg font-semibold text-gray-800">Choose an emoji</span>
+                          <button 
+                            onClick={() => setShowEmojis(false)}
+                            className="text-gray-400 hover:text-gray-600 text-xl p-1 rounded-full hover:bg-gray-100"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-12 gap-2 max-h-64 overflow-y-auto">
+                          {emojis.map((emoji, index) => (
+                            <button
+                              key={`emoji-${index}-${emoji}`}
+                              type="button"
+                              className="text-xl hover:bg-gray-100 rounded-lg p-3 transition-colors hover:scale-110"
+                              onClick={() => {
+                                insertEmoji(emoji);
+                                setShowEmojis(false);
+                              }}
+                              title={`Insert ${emoji}`}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
       </div>
+      {/* Enhanced Editor Area */}
       <div
         ref={editorRef}
-        className="min-h-48 max-h-[50vh] overflow-y-auto p-3 outline-none"
+        className="min-h-64 max-h-[60vh] overflow-y-auto p-4 outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 rounded-b-lg"
         contentEditable
         onInput={() => editorRef.current && onChange(editorRef.current.innerHTML)}
+        onKeyDown={(e) => {
+          // Keyboard shortcuts
+          if (e.ctrlKey || e.metaKey) {
+            switch (e.key) {
+              case 'b':
+                e.preventDefault();
+                exec('bold');
+                break;
+              case 'i':
+                e.preventDefault();
+                exec('italic');
+                break;
+              case 'u':
+                e.preventDefault();
+                exec('underline');
+                break;
+              case 'z':
+                e.preventDefault();
+                if (e.shiftKey) {
+                  redoAction();
+                } else {
+                  undoAction();
+                }
+                break;
+              case 'y':
+                e.preventDefault();
+                redoAction();
+                break;
+              case 's':
+                e.preventDefault();
+                // Save functionality can be added here
+                break;
+            }
+          }
+        }}
         suppressContentEditableWarning
+        style={{
+          lineHeight: '1.6',
+          fontSize: '16px',
+          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+        placeholder="Start writing your blog post here... Use Ctrl+B for bold, Ctrl+I for italic, Ctrl+U for underline"
       />
+      
+      {/* Enhanced Styles */}
+      <style jsx>{`
+        div[contenteditable="true"] {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        div[contenteditable="true"]:empty:before {
+          content: attr(placeholder);
+          color: #9ca3af;
+          pointer-events: none;
+        }
+        
+        /* Code blocks */
+        div[contenteditable="true"] pre {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 16px;
+          margin: 16px 0;
+          overflow-x: auto;
+          font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        
+        div[contenteditable="true"] code {
+          background: #f1f3f4;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
+          font-size: 13px;
+        }
+        
+        /* Tables */
+        div[contenteditable="true"] table {
+          border-collapse: collapse;
+          width: 100%;
+          margin: 16px 0;
+          border: 1px solid #ddd;
+        }
+        
+        div[contenteditable="true"] th,
+        div[contenteditable="true"] td {
+          border: 1px solid #ddd;
+          padding: 12px;
+          text-align: left;
+        }
+        
+        div[contenteditable="true"] th {
+          background-color: #f8f9fa;
+          font-weight: 600;
+        }
+        
+        /* Blockquotes */
+        div[contenteditable="true"] blockquote {
+          border-left: 4px solid #3b82f6;
+          margin: 16px 0;
+          padding: 16px 20px;
+          background: #f8fafc;
+          font-style: italic;
+          color: #4b5563;
+        }
+        
+        /* Headings */
+        div[contenteditable="true"] h1 {
+          font-size: 2rem;
+          font-weight: 700;
+          margin: 24px 0 16px 0;
+          color: #1f2937;
+        }
+        
+        div[contenteditable="true"] h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin: 20px 0 12px 0;
+          color: #374151;
+        }
+        
+        /* Lists */
+        div[contenteditable="true"] ul,
+        div[contenteditable="true"] ol {
+          margin: 16px 0;
+          padding-left: 24px;
+        }
+        
+        div[contenteditable="true"] li {
+          margin: 8px 0;
+          line-height: 1.6;
+        }
+        
+        /* Horizontal rule */
+        div[contenteditable="true"] hr {
+          border: none;
+          height: 2px;
+          background: linear-gradient(to right, #e5e7eb, #3b82f6, #e5e7eb);
+          margin: 24px 0;
+        }
+        
+        /* Images */
+        div[contenteditable="true"] img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          margin: 16px auto;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        div[contenteditable="true"] img:hover {
+          transform: scale(1.02);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        div[contenteditable="true"] .image-container {
+          position: relative;
+          display: inline-block;
+          width: 100%;
+          margin: 20px 0;
+        }
+        
+        div[contenteditable="true"] .image-container:hover::after {
+          content: "Click to resize • Right-click for options";
+          position: absolute;
+          bottom: -20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(0, 0, 0, 0.8);
+          color: white;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 11px;
+          white-space: nowrap;
+          z-index: 10;
+        }
+        
+        div[contenteditable="true"] h1 {
+          font-size: 2rem;
+          font-weight: bold;
+          margin: 1.5rem 0 1rem 0;
+          color: #1f2937;
+        }
+        
+        div[contenteditable="true"] h2 {
+          font-size: 1.5rem;
+          font-weight: bold;
+          margin: 1.25rem 0 0.75rem 0;
+          color: #374151;
+        }
+        
+        div[contenteditable="true"] blockquote {
+          border-left: 4px solid #3b82f6;
+          padding-left: 1rem;
+          margin: 1rem 0;
+          font-style: italic;
+          background-color: #f8fafc;
+          padding: 1rem;
+          border-radius: 0 8px 8px 0;
+        }
+        
+        div[contenteditable="true"] pre {
+          background-color: #1f2937;
+          color: #f9fafb;
+          padding: 1rem;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 1rem 0;
+          font-family: 'Courier New', monospace;
+        }
+        
+        div[contenteditable="true"] ul, div[contenteditable="true"] ol {
+          margin: 1rem 0;
+          padding-left: 2rem;
+        }
+        
+        div[contenteditable="true"] li {
+          margin: 0.5rem 0;
+        }
+        
+        div[contenteditable="true"] a {
+          color: #3b82f6;
+          text-decoration: underline;
+        }
+        
+        div[contenteditable="true"] a:hover {
+          color: #1d4ed8;
+        }
+        
+        .image-container {
+          text-align: center;
+          margin: 16px 0;
+          position: relative;
+          display: block;
+          width: 100%;
+        }
+        
+        .image-container:hover .image-controls {
+          display: flex !important;
+        }
+        
+        .image-container:hover .image-info {
+          display: block !important;
+        }
+        
+        .image-wrapper {
+          position: relative;
+          display: inline-block;
+          max-width: 100%;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          transition: transform 0.2s ease;
+        }
+        
+        .image-wrapper:hover {
+          transform: scale(1.02);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .image-wrapper img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          cursor: move;
+          transition: transform 0.2s ease;
+        }
+        
+        .image-wrapper img:hover {
+          cursor: grab;
+        }
+        
+        .image-wrapper img:active {
+          cursor: grabbing;
+        }
+        
+        .image-controls {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          display: none;
+          gap: 4px;
+          z-index: 10;
+        }
+        
+        .image-controls button {
+          background: rgba(0,0,0,0.7);
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 4px 8px;
+          font-size: 12px;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+        
+        .image-controls button:hover {
+          background: rgba(0,0,0,0.9);
+        }
+        
+        .image-controls button:last-child {
+          background: rgba(220,38,38,0.8);
+        }
+        
+        .image-controls button:last-child:hover {
+          background: rgba(220,38,38,1);
+        }
+        
+        .image-loading {
+          text-align: center;
+          padding: 40px;
+          background: #f8fafc;
+          border: 2px dashed #cbd5e1;
+          border-radius: 8px;
+          color: #64748b;
+        }
+        
+        .image-error {
+          text-align: center;
+          padding: 20px;
+          background: #fef2f2;
+          border: 2px solid #fecaca;
+          border-radius: 8px;
+          color: #dc2626;
+        }
+        
+        .image-info {
+          margin-top: 8px;
+          font-size: 12px;
+          color: #6b7280;
+          text-align: center;
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        
+        .image-container:hover .image-info {
+          opacity: 1;
+        }
+      `}</style>
     </div>
   );
 }

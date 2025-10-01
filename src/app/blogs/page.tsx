@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BlogCard from '@/components/BlogCard';
 import NewsletterSubscription from '@/components/NewsletterSubscription';
+import AnalyticsTracker from '@/components/AnalyticsTracker';
 import { getAllBlogs, getFeaturedBlogs, getBlogCategories } from '@/lib/database';
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export default function BlogsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <AnalyticsTracker page="/blogs" />
       <Header />
       
       {/* Hero Section */}

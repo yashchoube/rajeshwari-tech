@@ -1,5 +1,6 @@
-import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions } from '@/lib/database';
+import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions, getAnalyticsData, getReferrerData } from '@/lib/database';
 import { Suspense } from 'react';
+import EnrollmentCard from '@/components/EnrollmentCard';
 
 interface DemoBooking {
   id: number;
@@ -37,20 +38,35 @@ interface NewsletterSubscription {
   last_sent?: string;
 }
 
+interface AnalyticsData {
+  page: string;
+  visits: number;
+  unique_referrers: number;
+  last_visit: string;
+}
+
+interface ReferrerData {
+  referrer: string;
+  visits: number;
+  last_visit: string;
+}
+
 async function AdminDashboard() {
   const demoBookings = getAllDemoBookings() as DemoBooking[];
   const enrollments = getAllEnrollments() as Enrollment[];
   const newsletterSubscriptions = getAllNewsletterSubscriptions() as NewsletterSubscription[];
+  const analyticsData = getAnalyticsData() as AnalyticsData[];
+  const referrerData = getReferrerData() as ReferrerData[];
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage demo bookings and enrollments</p>
+          <p className="text-gray-600 mt-2">Manage demo bookings, enrollments, and view analytics</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-4 gap-8">
           {/* Demo Bookings */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
@@ -101,31 +117,58 @@ async function AdminDashboard() {
                 <p className="text-gray-500 text-center py-8">No enrollments yet</p>
               ) : (
                 enrollments.map((enrollment) => (
-                  <div key={enrollment.id} className="border border-gray-200 rounded-lg p-4">
+                  <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Analytics */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Page Analytics
+            </h2>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {analyticsData.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No analytics data yet</p>
+              ) : (
+                analyticsData.map((data) => (
+                  <div key={data.page} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-gray-900">{enrollment.name}</h3>
+                      <h3 className="font-medium text-gray-900">{data.page}</h3>
                       <span className="text-xs text-gray-500">
-                        {new Date(enrollment.created_at).toLocaleDateString()}
+                        {new Date(data.last_visit).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
-                      <p><strong>Email:</strong> {enrollment.email}</p>
-                      <p><strong>Phone:</strong> {enrollment.phone}</p>
-                      <p><strong>Course:</strong> {enrollment.course_name}</p>
-                      <p><strong>Experience:</strong> {enrollment.experience}</p>
-                      {enrollment.goals && (
-                        <p><strong>Goals:</strong> {enrollment.goals}</p>
-                      )}
-                      {enrollment.referral && (
-                        <p><strong>Referral:</strong> {enrollment.referral}</p>
-                      )}
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                        enrollment.status === 'pending' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {enrollment.status}
+                      <p><strong>Visits:</strong> {data.visits}</p>
+                      <p><strong>Unique Referrers:</strong> {data.unique_referrers}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Referrers */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Top Referrers
+            </h2>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {referrerData.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No referrer data yet</p>
+              ) : (
+                referrerData.map((data) => (
+                  <div key={data.referrer} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-gray-900 text-sm truncate">{data.referrer}</h3>
+                      <span className="text-xs text-gray-500">
+                        {new Date(data.last_visit).toLocaleDateString()}
                       </span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p><strong>Visits:</strong> {data.visits}</p>
                     </div>
                   </div>
                 ))
@@ -171,7 +214,7 @@ async function AdminDashboard() {
         </div>
 
         {/* Summary Stats */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <div className="text-3xl font-bold text-indigo-600">{demoBookings.length}</div>
             <div className="text-gray-600">Total Demo Bookings</div>
@@ -182,6 +225,12 @@ async function AdminDashboard() {
           </div>
           <div className="bg-white rounded-lg shadow p-6 text-center">
             <div className="text-3xl font-bold text-purple-600">
+              {analyticsData.reduce((total, data) => total + data.visits, 0)}
+            </div>
+            <div className="text-gray-600">Total Page Views</div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-6 text-center">
+            <div className="text-3xl font-bold text-orange-600">
               {demoBookings.length + enrollments.length + newsletterSubscriptions.length}
             </div>
             <div className="text-gray-600">Total Leads</div>

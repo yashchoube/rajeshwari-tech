@@ -2,12 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Menu, X, ChevronDown, Play } from 'lucide-react';
+import CourseSelectionModal from './CourseSelectionModal';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isHoveringDropdown, setIsHoveringDropdown] = useState(false);
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const pathname = usePathname();
+  
+  // Hide Enroll Now button on courses page
+  const shouldShowEnrollButton = pathname !== '/courses';
 
   const courses = [
     { name: 'Core Java + Competitive Programming', href: '/courses/core-java-advanced' },
@@ -147,18 +154,15 @@ const Header = () => {
             <Link href="/contact" className="text-gray-700 hover:text-indigo-600 font-medium transition-colors">
               Contact
             </Link>
-            <button 
-              onClick={() => {
-                // Scroll to courses section
-                const coursesSection = document.getElementById('courses');
-                if (coursesSection) {
-                  coursesSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-2 rounded-full font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
-              Enroll Now
-            </button>
+            {shouldShowEnrollButton && (
+              <button 
+                onClick={() => setIsCourseModalOpen(true)}
+                className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-full font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+              >
+                <Play className="w-4 h-4" />
+                <span>Enroll Now</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -216,23 +220,28 @@ const Header = () => {
               <Link href="/contact" className="block px-3 py-2 text-gray-700 hover:text-indigo-600 font-medium">
                 Contact
               </Link>
-              <button 
-                onClick={() => {
-                  setIsMenuOpen(false);
-                  // Scroll to courses section
-                  const coursesSection = document.getElementById('courses');
-                  if (coursesSection) {
-                    coursesSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className="block mx-3 mt-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-full font-semibold text-center w-full"
-              >
-                Enroll Now
-              </button>
+              {shouldShowEnrollButton && (
+                <button 
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsCourseModalOpen(true);
+                  }}
+                  className="block mx-3 mt-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-full font-semibold text-center w-full flex items-center justify-center space-x-2"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Enroll Now</span>
+                </button>
+              )}
             </div>
           </div>
         )}
       </nav>
+
+      {/* Course Selection Modal */}
+      <CourseSelectionModal 
+        isOpen={isCourseModalOpen} 
+        onClose={() => setIsCourseModalOpen(false)} 
+      />
     </header>
   );
 };

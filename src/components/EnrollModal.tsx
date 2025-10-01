@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, CreditCard, Shield, Clock } from 'lucide-react';
 import { Course } from '@/data/courses';
 
 interface EnrollModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (success?: boolean) => void;
   course: Course | null;
 }
 
@@ -24,6 +25,24 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    
+    if (isOpen) {
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restore body scroll when modal is closed
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      setMounted(false);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -84,21 +103,59 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
 
   const handleClose = () => {
     resetModal();
-    onClose();
+    onClose(isSuccess);
   };
 
-  if (!course) return null;
+  if (!course || !mounted) return null;
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div 
+          className="fixed inset-0 z-[999999]"
+          style={{ 
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 999999,
+            pointerEvents: 'auto'
+          }}
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={onClose}
+            style={{ 
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 999999,
+              padding: '2rem',
+              pointerEvents: 'auto'
+            }}
           >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'relative',
+                zIndex: 1000000,
+                maxHeight: '90vh',
+                overflow: 'auto',
+                width: '100%',
+                maxWidth: '42rem',
+                pointerEvents: 'auto'
+              }}
+            >
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
               <div className="flex items-center justify-between">
@@ -359,11 +416,14 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
                 </motion.div>
               )}
             </div>
+            </motion.div>
           </motion.div>
         </div>
       )}
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default EnrollModal;

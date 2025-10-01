@@ -24,6 +24,11 @@ interface CourseDetailProps {
 
 const CourseDetail = ({ course }: CourseDetailProps) => {
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [enrolled, setEnrolled] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const key = `enrolled:${course.id}`;
+    return localStorage.getItem(key) === 'true';
+  });
 
   const handleDownloadSyllabus = async () => {
     try {
@@ -130,14 +135,17 @@ const CourseDetail = ({ course }: CourseDetailProps) => {
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <motion.button
-                  className="bg-white text-indigo-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Play className="w-5 h-5" />
-                  <span>Start Learning</span>
-                </motion.button>
+                {!enrolled && (
+                  <motion.button
+                    onClick={() => setIsEnrollModalOpen(true)}
+                    className="bg-white text-indigo-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2 shadow-xl"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Play className="w-5 h-5" />
+                    <span>Enroll Now</span>
+                  </motion.button>
+                )}
                 <motion.button
                   onClick={handleDownloadSyllabus}
                   className="bg-white/10 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white hover:text-indigo-600 transition-all duration-300 flex items-center justify-center space-x-2"
@@ -191,14 +199,16 @@ const CourseDetail = ({ course }: CourseDetailProps) => {
                   </div>
                 </div>
 
-                <motion.button
-                  onClick={() => setIsEnrollModalOpen(true)}
-                  className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-4 rounded-full font-bold text-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 shadow-xl"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Enroll Now
-                </motion.button>
+                {!enrolled && (
+                  <motion.button
+                    onClick={() => setIsEnrollModalOpen(true)}
+                    className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-6 py-4 rounded-full font-bold text-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 shadow-xl"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Enroll Now
+                  </motion.button>
+                )}
 
                 <div className="text-center mt-4">
                   <button className="text-white/80 hover:text-white transition-colors flex items-center justify-center space-x-2 mx-auto">
@@ -336,11 +346,12 @@ const CourseDetail = ({ course }: CourseDetailProps) => {
 
                 <motion.button
                   onClick={() => setIsEnrollModalOpen(true)}
-                  className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-full font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
+                  className="w-full mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-4 rounded-full font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2 text-lg"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Enroll Now
+                  <Play className="w-5 h-5" />
+                  <span>Enroll Now</span>
                 </motion.button>
               </motion.div>
 
@@ -372,7 +383,13 @@ const CourseDetail = ({ course }: CourseDetailProps) => {
       {/* Enrollment Modal */}
       <EnrollModal 
         isOpen={isEnrollModalOpen} 
-        onClose={() => setIsEnrollModalOpen(false)} 
+        onClose={(success?: boolean) => {
+          setIsEnrollModalOpen(false);
+          if (success) {
+            localStorage.setItem(`enrolled:${course.id}`, 'true');
+            setEnrolled(true);
+          }
+        }} 
         course={course}
       />
     </div>

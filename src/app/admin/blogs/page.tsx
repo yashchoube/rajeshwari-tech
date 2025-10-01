@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Edit, Trash2, Eye, Calendar, User, CheckCircle2, XCircle } from 'lucide-react';
 import RichTextEditor from '@/components/RichTextEditor';
+import ImageManager from '@/components/ImageManager';
 
 interface Blog {
   id: number;
@@ -56,24 +57,47 @@ export default function AdminBlogsPage() {
   };
 
   const createBlog = async () => {
+    // Client-side validation
+    const errors = [];
+    if (!form.title.trim()) errors.push('Title is required');
+    if (!form.excerpt.trim()) errors.push('Excerpt is required');
+    if (!form.author.trim()) errors.push('Author is required');
+    if (!form.category.trim()) errors.push('Category is required');
+    if (!form.content.trim()) errors.push('Content is required');
+
+    if (errors.length > 0) {
+      alert(`Please fix the following errors:\n• ${errors.join('\n• ')}`);
+      return;
+    }
+
     try {
       const res = await fetch('/api/blogs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          slug: form.slug.trim() || undefined, // Let backend auto-generate if empty
+        }),
       });
+      
+      const result = await res.json();
+      
       if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || 'Failed to submit blog');
+        if (result.errors) {
+          alert(`Please fix the following errors:\n• ${result.errors.join('\n• ')}`);
+        } else {
+          alert(result.error || 'Failed to submit blog');
+        }
         return;
       }
+      
       setShowCreateForm(false);
       setForm({ title: '', slug: '', excerpt: '', author: '', category: '', tags: '', featuredImage: '', featured: false, content: '' });
       await fetchBlogs();
-      alert('Blog submitted for approval. wait for approval to publish.');
+      alert('✅ Blog submitted for approval successfully!');
     } catch (e) {
       console.error(e);
-      alert('Failed to submit blog');
+      alert('❌ Failed to submit blog. Please try again.');
     }
   };
 
@@ -84,19 +108,40 @@ export default function AdminBlogsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
+      
+      const result = await res.json();
+      
       if (res.ok) {
         await fetchBlogs();
+        alert('✅ Blog approved and published successfully!');
+      } else {
+        alert(`❌ Failed to approve blog: ${result.error || 'Unknown error'}`);
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error approving blog:', error);
+      alert('❌ Failed to approve blog. Please try again.');
+    }
   };
 
   const remove = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this blog? This action cannot be undone.')) {
+      return;
+    }
+    
     try {
       const res = await fetch(`/api/blogs/approve?id=${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      
       if (res.ok) {
         await fetchBlogs();
+        alert('✅ Blog deleted successfully!');
+      } else {
+        alert(`❌ Failed to delete blog: ${result.error || 'Unknown error'}`);
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error deleting blog:', error);
+      alert('❌ Failed to delete blog. Please try again.');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -257,24 +302,18 @@ export default function AdminBlogsPage() {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => {
-                              window.open(`/blogs/${blog.slug}`, '_blank');
+                              const url = blog.status === 'published'
+                                ? `/blogs/${blog.slug}`
+                                : `/admin/blogs/preview/${blog.slug}`;
+                              window.open(url, '_blank');
                             }}
                             className="text-indigo-600 hover:text-indigo-900"
-                            title="View Blog"
+                            title={blog.status === 'published' ? 'View' : 'Preview'}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           {blog.status !== 'published' ? (
                             <>
-                              <button
-                                onClick={() => {
-                                  window.open(`/blogs/${blog.slug}?preview=true`, '_blank');
-                                }}
-                                className="text-indigo-600 hover:text-indigo-900"
-                                title="Preview"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </button>
                               <button
                                 onClick={() => approve(blog.id)}
                                 className="text-green-600 hover:text-green-900"
@@ -310,31 +349,147 @@ export default function AdminBlogsPage() {
         </div>
 
         {showCreateForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] flex flex-col">
-              <div className="p-6 border-b">
-                <h2 className="text-xl font-bold">Create New Blog</h2>
-              </div>
-              <div className="p-6 overflow-y-auto space-y-3">
-                <input className="w-full border rounded px-3 py-2" placeholder="Title" value={form.title} onChange={e=>setForm({...form,title:e.target.value})} />
-                <input className="w-full border rounded px-3 py-2" placeholder="Slug (unique, url-friendly)" value={form.slug} onChange={e=>setForm({...form,slug:e.target.value})} />
-                <input className="w-full border rounded px-3 py-2" placeholder="Excerpt" value={form.excerpt} onChange={e=>setForm({...form,excerpt:e.target.value})} />
-                <div className="grid grid-cols-2 gap-3">
-                  <input className="w-full border rounded px-3 py-2" placeholder="Author" value={form.author} onChange={e=>setForm({...form,author:e.target.value})} />
-                  <input className="w-full border rounded px-3 py-2" placeholder="Category" value={form.category} onChange={e=>setForm({...form,category:e.target.value})} />
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col">
+              <div className="p-6 border-b bg-gradient-to-r from-indigo-50 to-purple-50">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Create New Blog Post</h2>
+                    <p className="text-gray-600 mt-1">Write and format your content with our rich editor</p>
+                  </div>
+                  <button 
+                    onClick={() => setShowCreateForm(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <XCircle className="w-6 h-6" />
+                  </button>
                 </div>
-                <input className="w-full border rounded px-3 py-2" placeholder="Tags (comma separated)" value={form.tags} onChange={e=>setForm({...form,tags:e.target.value})} />
-                <input className="w-full border rounded px-3 py-2" placeholder="Featured image URL (optional)" value={form.featuredImage} onChange={e=>setForm({...form,featuredImage:e.target.value})} />
-                <label className="flex items-center space-x-2 text-sm"><input type="checkbox" checked={form.featured} onChange={e=>setForm({...form,featured:e.target.checked})} /><span>Mark as featured</span></label>
+              </div>
+              
+              <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Blog Title *</label>
+                    <input 
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                      placeholder="Enter a compelling title..." 
+                      value={form.title} 
+                      onChange={e=>setForm({...form,title:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">URL Slug</label>
+                    <input 
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                      placeholder="auto-generated-from-title" 
+                      value={form.slug} 
+                      onChange={e=>setForm({...form,slug:e.target.value})} 
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Leave empty to auto-generate from title</p>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="block text-sm font-medium mb-1">Content</label>
-                  <div className="text-xs text-gray-500 mb-2">Format with toolbar; paste from docs; insert images/links/emojis.</div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Excerpt *</label>
+                  <textarea 
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                    placeholder="Write a brief description of your blog post..."
+                    rows={3}
+                    value={form.excerpt} 
+                    onChange={e=>setForm({...form,excerpt:e.target.value})} 
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Author *</label>
+                    <input 
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                      placeholder="Author name" 
+                      value={form.author} 
+                      onChange={e=>setForm({...form,author:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                    <select 
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                      value={form.category} 
+                      onChange={e=>setForm({...form,category:e.target.value})}
+                    >
+                      <option value="">Select a category</option>
+                      <option value="Programming">Programming</option>
+                      <option value="Technology">Technology</option>
+                      <option value="Career">Career</option>
+                      <option value="Tutorials">Tutorials</option>
+                      <option value="Industry Insights">Industry Insights</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Tags</label>
+                  <input 
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                    placeholder="react, javascript, web-development (comma separated)" 
+                    value={form.tags} 
+                    onChange={e=>setForm({...form,tags:e.target.value})} 
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Separate tags with commas for better discoverability</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Featured Image</label>
+                  <ImageManager 
+                    onImageSelect={(url, filename) => setForm({...form, featuredImage: url})}
+                    onImageRemove={() => setForm({...form, featuredImage: ''})}
+                    className="mb-4"
+                  />
+                  <input 
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                    placeholder="Or enter image URL manually" 
+                    value={form.featuredImage} 
+                    onChange={e=>setForm({...form,featuredImage:e.target.value})} 
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Upload an image or paste an image URL for the cover image</p>
+                </div>
+
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center space-x-2 text-sm font-medium">
+                    <input 
+                      type="checkbox" 
+                      checked={form.featured} 
+                      onChange={e=>setForm({...form,featured:e.target.checked})}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <span>Mark as featured post</span>
+                  </label>
+                </div>
+
+                {/* Rich Text Editor */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Content *</label>
+                  <div className="text-sm text-gray-600 mb-3">
+                    Use the toolbar below to format your content. You can paste from other documents, insert images, add links, and use emojis.
+                  </div>
                   <RichTextEditor value={form.content} onChange={(html)=>setForm({...form, content: html})} />
                 </div>
               </div>
-              <div className="p-4 border-t flex items-center justify-between sticky bottom-0 bg-white">
-                <button className="text-sm text-red-500 hover:underline" onClick={() => setShowCreateForm(false)}>Cancel</button>
-                <button className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700" onClick={createBlog}>Submit for Approval</button>
+              
+              <div className="p-6 border-t bg-gray-50 flex items-center justify-between sticky bottom-0">
+                <button 
+                  className="text-sm text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors" 
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5" 
+                  onClick={createBlog}
+                >
+                  Submit for Approval
+                </button>
               </div>
             </div>
           </div>

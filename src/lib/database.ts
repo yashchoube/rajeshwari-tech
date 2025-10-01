@@ -1,15 +1,24 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
-const dbPath = path.join(process.cwd(), 'data', 'rajeshwari-tech.db');
+const dataDir = path.join(process.cwd(), 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+const dbPath = path.join(dataDir, 'rajeshwari-tech.db');
 const db = new Database(dbPath);
 
 const slugifyTitle = (title: string) => {
-    return title
+    const baseSlug = title
       .toLowerCase()
       .trim()
       .replace(/\s+/g, '-')       // replace spaces with -
       .replace(/[^\w-]+/g, '');   // remove special chars
+    
+    // Add timestamp to ensure uniqueness
+    const timestamp = Date.now();
+    return `${baseSlug}-${timestamp}`;
   };
 
 // Create tables if they don't exist
@@ -64,6 +73,17 @@ export const initDatabase = () => {
       views INTEGER DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Create analytics table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS analytics (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      page TEXT NOT NULL,
+      referrer TEXT,
+      user_agent TEXT,
+      visit_date DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
 
@@ -148,6 +168,49 @@ export const saveEnrollment = (enrollmentData: {
 
 export const getAllEnrollments = () => {
   const stmt = db.prepare('SELECT * FROM enrollments ORDER BY created_at DESC');
+  return stmt.all();
+};
+
+export const updateEnrollmentStatus = (id: number, status: string) => {
+  const stmt = db.prepare('UPDATE enrollments SET status = ?, created_at = created_at WHERE id = ?');
+  return stmt.run(status, id);
+};
+
+// Analytics tracking
+export const trackPageVisit = (page: string, referrer?: string, userAgent?: string) => {
+  const stmt = db.prepare(`
+    INSERT INTO analytics (page, referrer, user_agent, visit_date) 
+    VALUES (?, ?, ?, datetime('now'))
+  `);
+  return stmt.run(page, referrer || null, userAgent || null);
+};
+
+export const getAnalyticsData = () => {
+  const stmt = db.prepare(`
+    SELECT 
+      page,
+      COUNT(*) as visits,
+      COUNT(DISTINCT referrer) as unique_referrers,
+      MAX(visit_date) as last_visit
+    FROM analytics 
+    GROUP BY page 
+    ORDER BY visits DESC
+  `);
+  return stmt.all();
+};
+
+export const getReferrerData = () => {
+  const stmt = db.prepare(`
+    SELECT 
+      referrer,
+      COUNT(*) as visits,
+      MAX(visit_date) as last_visit
+    FROM analytics 
+    WHERE referrer IS NOT NULL AND referrer != ''
+    GROUP BY referrer 
+    ORDER BY visits DESC
+    LIMIT 20
+  `);
   return stmt.all();
 };
 

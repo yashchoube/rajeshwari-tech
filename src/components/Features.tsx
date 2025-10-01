@@ -13,61 +13,52 @@ import {
   Clock,
   Shield
 } from 'lucide-react';
+import { SITE_CONFIG, getFeatureDescription, getStatsData } from '@/data/siteConfig';
 
 const Features = () => {
   const features = [
     {
       icon: Users,
       title: 'Industry Experts',
-      description: 'Learn from professionals with 10+ years of experience in top tech companies like Google, Amazon, and Microsoft.',
-      link: '#',
+      description: getFeatureDescription('INDUSTRY_EXPERTS'),
       color: 'from-blue-500 to-cyan-500'
     },
     {
       icon: Target,
       title: 'Project-Based Learning',
-      description: 'Build 15+ real-world projects that you can showcase in your portfolio to impress recruiters.',
-      link: '#',
+      description: getFeatureDescription('PROJECT_BASED_LEARNING'),
       color: 'from-purple-500 to-pink-500'
     },
     {
       icon: Trophy,
       title: 'Placement Assistance',
-      description: 'Get dedicated placement support with resume building, mock interviews, and direct referrals to partner companies.',
-      link: '#',
+      description: getFeatureDescription('PLACEMENT_ASSISTANCE'),
       color: 'from-green-500 to-emerald-500'
     },
     {
       icon: BookOpen,
       title: 'Lifetime Access',
       description: 'Get lifetime access to course materials, updates, and our exclusive community of learners and mentors.',
-      link: '#',
       color: 'from-orange-500 to-red-500'
     },
     {
       icon: Lightbulb,
       title: 'Live Sessions',
       description: 'Interactive live classes with doubt clearing sessions, code reviews, and personalized feedback.',
-      link: '#',
       color: 'from-yellow-500 to-orange-500'
     },
     {
       icon: Award,
       title: 'Certification',
       description: 'Earn industry-recognized certificates that validate your skills and boost your professional profile.',
-      link: '#',
       color: 'from-indigo-500 to-purple-500'
     }
   ];
 
-  const stats = [
-    { number: '5000+', label: 'Students Trained', icon: Users },
-    { number: '95%', label: 'Placement Rate', icon: Trophy },
-    { number: '50+', label: 'Corporate Clients', icon: Shield },
-    { number: '4.9★', label: 'Student Rating', icon: Award },
-    { number: '24/7', label: 'Support Available', icon: Clock },
-    { number: '100%', label: 'Job Guarantee', icon: CheckCircle },
-  ];
+  const stats = getStatsData().map((stat, index) => ({
+    ...stat,
+    icon: [Users, Trophy, Shield, Award, Clock, CheckCircle][index]
+  }));
 
   return (
     <section className="py-20 bg-gray-50">
@@ -132,14 +123,6 @@ const Features = () => {
                     {feature.description}
                   </p>
 
-                  {/* Link */}
-                  <a 
-                    href={feature.link}
-                    className="inline-flex items-center space-x-2 text-indigo-600 font-semibold hover:text-indigo-700 transition-colors group/link"
-                  >
-                    <span>Learn more</span>
-                    <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
-                  </a>
                 </div>
               </motion.div>
             );
