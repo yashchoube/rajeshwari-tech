@@ -14,8 +14,7 @@ import {
   Play, 
   Target,
   BookOpen,
-  Download,
-  Share2
+  Download
 } from 'lucide-react';
 
 interface CourseDetailProps {
@@ -210,12 +209,6 @@ const CourseDetail = ({ course }: CourseDetailProps) => {
                   </motion.button>
                 )}
 
-                <div className="text-center mt-4">
-                  <button className="text-white/80 hover:text-white transition-colors flex items-center justify-center space-x-2 mx-auto">
-                    <Share2 className="w-4 h-4" />
-                    <span>Share this course</span>
-                  </button>
-                </div>
               </div>
             </motion.div>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, ChevronDown, Play } from 'lucide-react';
@@ -9,12 +9,60 @@ import CourseSelectionModal from './CourseSelectionModal';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [isHoveringDropdown, setIsHoveringDropdown] = useState(false);
   const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const pathname = usePathname();
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Hide Enroll Now button on courses page
   const shouldShowEnrollButton = pathname !== '/courses';
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle dropdown hover with proper cleanup
+  const handleDropdownEnter = (dropdownName: string) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setActiveDropdown(dropdownName);
+  };
+
+  const handleDropdownLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 150); // Small delay to prevent flickering
+  };
+
+  // Close dropdowns when clicking outside or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-dropdown]')) {
+        setActiveDropdown(null);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
 
   const courses = [
     { name: 'Core Java + Competitive Programming', href: '/courses/core-java-advanced' },
@@ -62,30 +110,19 @@ const Header = () => {
             {/* Courses Dropdown */}
             <div 
               className="relative"
-              onMouseEnter={() => {
-                setActiveDropdown('courses');
-                setIsHoveringDropdown(true);
-              }}
-              onMouseLeave={() => {
-                setTimeout(() => {
-                  if (!isHoveringDropdown) {
-                    setActiveDropdown(null);
-                  }
-                }, 100);
-              }}
+              data-dropdown="courses"
+              onMouseEnter={() => handleDropdownEnter('courses')}
+              onMouseLeave={handleDropdownLeave}
             >
               <button className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 font-medium transition-colors">
                 <span>Courses</span>
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === 'courses' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'courses' && (
                 <div 
                   className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
-                  onMouseEnter={() => setIsHoveringDropdown(true)}
-                  onMouseLeave={() => {
-                    setIsHoveringDropdown(false);
-                    setActiveDropdown(null);
-                  }}
+                  onMouseEnter={() => handleDropdownEnter('courses')}
+                  onMouseLeave={handleDropdownLeave}
                 >
                   <div className="grid grid-cols-1 gap-1">
                     {courses.map((course) => (
@@ -105,30 +142,19 @@ const Header = () => {
             {/* Services Dropdown */}
             <div 
               className="relative"
-              onMouseEnter={() => {
-                setActiveDropdown('services');
-                setIsHoveringDropdown(true);
-              }}
-              onMouseLeave={() => {
-                setTimeout(() => {
-                  if (!isHoveringDropdown) {
-                    setActiveDropdown(null);
-                  }
-                }, 100);
-              }}
+              data-dropdown="services"
+              onMouseEnter={() => handleDropdownEnter('services')}
+              onMouseLeave={handleDropdownLeave}
             >
               <button className="flex items-center space-x-1 text-gray-700 hover:text-indigo-600 font-medium transition-colors">
                 <span>Services</span>
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === 'services' ? 'rotate-180' : ''}`} />
               </button>
               {activeDropdown === 'services' && (
                 <div 
                   className="absolute top-full left-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50"
-                  onMouseEnter={() => setIsHoveringDropdown(true)}
-                  onMouseLeave={() => {
-                    setIsHoveringDropdown(false);
-                    setActiveDropdown(null);
-                  }}
+                  onMouseEnter={() => handleDropdownEnter('services')}
+                  onMouseLeave={handleDropdownLeave}
                 >
                   <div className="grid grid-cols-1 gap-1">
                     {services.map((service) => (
@@ -168,7 +194,10 @@ const Header = () => {
           {/* Mobile menu button */}
           <div className="md:hidden">
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => {
+                setIsMenuOpen(!isMenuOpen);
+                setActiveDropdown(null); // Close any open dropdowns
+              }}
               className="text-gray-700 hover:text-indigo-600 transition-colors"
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

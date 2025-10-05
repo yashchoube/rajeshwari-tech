@@ -83,19 +83,203 @@ export const SITE_CONFIG = {
     MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
     ALLOWED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
     MAX_IMAGES_PER_BLOG: 10
+  },
+
+  // Corporate Training Configuration
+  CORPORATE_TRAINING: {
+    PROGRAMS: [
+      {
+        title: 'Java Enterprise Development',
+        duration: '3 months',
+        participants: '20-50',
+        level: 'Intermediate to Advanced',
+        price: '₹2,50,000',
+        features: ['Spring Framework', 'Microservices', 'Database Integration', 'Cloud Deployment']
+      },
+      {
+        title: 'Python for Data Science',
+        duration: '2 months',
+        participants: '15-30',
+        level: 'Beginner to Intermediate',
+        price: '₹2,00,000',
+        features: ['Pandas & NumPy', 'Machine Learning', 'Data Visualization', 'Big Data Tools']
+      },
+      {
+        title: 'Full Stack Web Development',
+        duration: '4 months',
+        participants: '25-40',
+        level: 'Beginner to Advanced',
+        price: '₹3,00,000',
+        features: ['React.js', 'Node.js', 'Database Design', 'DevOps & Deployment']
+      },
+      {
+        title: 'DevOps & Cloud Computing',
+        duration: '2 months',
+        participants: '15-25',
+        level: 'Intermediate',
+        price: '₹2,20,000',
+        features: ['Docker & Kubernetes', 'AWS/Azure', 'CI/CD Pipelines', 'Infrastructure as Code']
+      },
+      {
+        title: 'Automation Testing & QA',
+        duration: '2 months',
+        participants: '20-30',
+        level: 'Beginner to Intermediate',
+        price: '₹1,80,000',
+        features: ['Selenium WebDriver', 'API Testing', 'Test Frameworks', 'CI/CD Integration']
+      },
+      {
+        title: 'Performance Testing',
+        duration: '1.5 months',
+        participants: '15-25',
+        level: 'Intermediate',
+        price: '₹1,50,000',
+        features: ['Load Testing', 'JMeter', 'Performance Monitoring', 'Optimization Strategies']
+      }
+    ],
+    SUCCESS_METRICS: {
+      COMPANIES_TRAINED: '500+',
+      SUCCESS_RATE: '95%',
+      CLIENT_SATISFACTION: '4.9★'
+    }
+  },
+
+  // Freelance Development Configuration
+  FREELANCE_DEVELOPMENT: {
+    SERVICES: [
+      {
+        title: 'Web Development',
+        price: 'Starting from ₹25,000',
+        duration: '2-8 weeks',
+        technologies: ['React.js', 'Next.js', 'Node.js', 'Express.js']
+      },
+      {
+        title: 'Mobile App Development',
+        price: 'Starting from ₹35,000',
+        duration: '3-12 weeks',
+        technologies: ['React Native', 'Flutter', 'Swift', 'Kotlin']
+      },
+      {
+        title: 'Backend Development',
+        price: 'Starting from ₹20,000',
+        duration: '2-6 weeks',
+        technologies: ['Python', 'Java', 'Node.js', 'PostgreSQL']
+      },
+      {
+        title: 'Cloud Solutions',
+        price: 'Starting from ₹30,000',
+        duration: '1-4 weeks',
+        technologies: ['AWS', 'Azure', 'Docker', 'Kubernetes']
+      },
+      {
+        title: 'Automation Testing',
+        price: 'Starting from ₹25,000',
+        duration: '2-6 weeks',
+        technologies: ['Selenium', 'Cypress', 'Playwright', 'Jest']
+      },
+      {
+        title: 'QA & Testing Services',
+        price: 'Starting from ₹20,000',
+        duration: '1-4 weeks',
+        technologies: ['Manual Testing', 'API Testing', 'Performance Testing', 'Security Testing']
+      }
+    ],
+    SUCCESS_METRICS: {
+      PROJECTS_DELIVERED: '100+',
+      HAPPY_CLIENTS: '50+',
+      DELIVERY_TIME: 'Fast'
+    }
+  },
+
+  // Interview Preparation Configuration
+  INTERVIEW_PREPARATION: {
+    PROGRAMS: [
+      {
+        title: 'Technical Interview Prep',
+        duration: '4-8 weeks',
+        format: '1-on-1 Sessions',
+        price: '₹15,000',
+        features: ['Coding Practice', 'Problem Solving', 'System Design', 'Mock Interviews']
+      },
+      {
+        title: 'Behavioral Interview Prep',
+        duration: '2-4 weeks',
+        format: 'Group Sessions',
+        price: '₹8,000',
+        features: ['STAR Method', 'Leadership Stories', 'Conflict Resolution', 'Teamwork Examples']
+      },
+      {
+        title: 'System Design Interview',
+        duration: '6-10 weeks',
+        format: '1-on-1 Sessions',
+        price: '₹25,000',
+        features: ['System Architecture', 'Scalability Patterns', 'Database Design', 'Real-world Examples']
+      },
+      {
+        title: 'Executive Interview Prep',
+        duration: '3-6 weeks',
+        format: '1-on-1 Sessions',
+        price: '₹20,000',
+        features: ['Strategic Thinking', 'Leadership Scenarios', 'Business Acumen', 'Vision Communication']
+      }
+    ],
+    SUCCESS_METRICS: {
+      STUDENTS_PLACED: '500+',
+      SUCCESS_RATE: '95%',
+      COMPANIES: 'FAANG Companies'
+    }
+  },
+
+  // Mentorship Configuration
+  MENTORSHIP: {
+    PROGRAMS: [
+      {
+        title: 'Career Guidance',
+        duration: '3-6 months',
+        sessions: '12-24 sessions',
+        price: '₹25,000',
+        features: ['Career Assessment', 'Goal Setting', 'Skill Development', 'Network Building']
+      },
+      {
+        title: 'Technical Mentorship',
+        duration: '2-4 months',
+        sessions: '8-16 sessions',
+        price: '₹20,000',
+        features: ['Code Reviews', 'Technical Projects', 'Best Practices', 'Problem Solving']
+      },
+      {
+        title: 'Leadership Development',
+        duration: '4-8 months',
+        sessions: '16-32 sessions',
+        price: '₹35,000',
+        features: ['Leadership Skills', 'Team Management', 'Strategic Thinking', 'Communication']
+      },
+      {
+        title: 'Interview Preparation',
+        duration: '1-3 months',
+        sessions: '4-12 sessions',
+        price: '₹15,000',
+        features: ['Mock Interviews', 'Technical Prep', 'Behavioral Prep', 'Negotiation Skills']
+      }
+    ],
+    SUCCESS_METRICS: {
+      MENTEES_GUIDED: '200+',
+      SUCCESS_RATE: '95%',
+      CAREER_GROWTH: 'Career Growth'
+    }
   }
 };
 
 // Helper functions for dynamic content generation
 export const getFeatureDescription = (featureType: keyof typeof SITE_CONFIG.FEATURES) => {
-  const config = SITE_CONFIG.FEATURES[featureType];
-  
   switch (featureType) {
     case 'INDUSTRY_EXPERTS':
-      return `Learn from professionals with ${config.EXPERIENCE_YEARS} years of experience in top tech companies like ${config.COMPANIES.join(', ')}.`;
+      const industryConfig = SITE_CONFIG.FEATURES.INDUSTRY_EXPERTS;
+      return `Learn from professionals with ${industryConfig.EXPERIENCE_YEARS} years of experience in top tech companies like ${industryConfig.COMPANIES.join(', ')}.`;
     
     case 'PROJECT_BASED_LEARNING':
-      return `Build ${config.PROJECT_COUNT} real-world projects that you can showcase in your portfolio to impress recruiters.`;
+      const projectConfig = SITE_CONFIG.FEATURES.PROJECT_BASED_LEARNING;
+      return `Build ${projectConfig.PROJECT_COUNT} real-world projects that you can showcase in your portfolio to impress recruiters.`;
     
     case 'PLACEMENT_ASSISTANCE':
       return `Get dedicated placement support with resume building, mock interviews, and direct referrals to partner companies.`;

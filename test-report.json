@@ -1,0 +1,136 @@
+{
+  "summary": {
+    "total": 13,
+    "passed": 11,
+    "failed": 2,
+    "warnings": 0,
+    "successRate": "84.62"
+  },
+  "tests": [
+    {
+      "name": "Blog Creation",
+      "status": "success",
+      "message": "Blog created successfully",
+      "data": {
+        "success": true,
+        "meta": {
+          "timestamp": "2025-10-05T14:40:20.649Z",
+          "requestId": "req_1759675220649_lo1bhn120",
+          "version": "1.0.0"
+        },
+        "data": {
+          "blogId": 13
+        },
+        "message": "Blog submitted for approval successfully"
+      },
+      "timestamp": "2025-10-05T14:40:20.661Z"
+    },
+    {
+      "name": "Blog Retrieval",
+      "status": "success",
+      "message": "Retrieved 10 blogs",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:20.909Z"
+    },
+    {
+      "name": "Admin Blog Retrieval",
+      "status": "success",
+      "message": "Retrieved 12 admin blogs",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:21.151Z"
+    },
+    {
+      "name": "Course Enrollment",
+      "status": "success",
+      "message": "Course enrollment successful",
+      "data": {
+        "success": true,
+        "enrollmentId": 4,
+        "message": "Enrollment submitted successfully"
+      },
+      "timestamp": "2025-10-05T14:40:21.404Z"
+    },
+    {
+      "name": "Enquiry Submission",
+      "status": "success",
+      "message": "Enquiry submitted successfully",
+      "data": {
+        "success": true,
+        "meta": {
+          "timestamp": "2025-10-05T14:40:21.688Z",
+          "requestId": "req_1759675221688_puhis15np",
+          "version": "1.0.0"
+        },
+        "data": {
+          "message": "Enquiry submitted successfully",
+          "enquiryId": "1759675221688"
+        }
+      },
+      "timestamp": "2025-10-05T14:40:21.690Z"
+    },
+    {
+      "name": "Analytics Tracking",
+      "status": "success",
+      "message": "Analytics tracking successful",
+      "data": {
+        "success": true,
+        "message": "Page visit tracked"
+      },
+      "timestamp": "2025-10-05T14:40:21.994Z"
+    },
+    {
+      "name": "Newsletter Subscription",
+      "status": "success",
+      "message": "Newsletter subscription successful",
+      "data": {
+        "success": true,
+        "subscriptionId": 5,
+        "message": "Successfully subscribed to newsletter!"
+      },
+      "timestamp": "2025-10-05T14:40:22.239Z"
+    },
+    {
+      "name": "Newsletter Subscribers Retrieval",
+      "status": "success",
+      "message": "Retrieved 3 newsletter subscriptions",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:22.485Z"
+    },
+    {
+      "name": "Invalid Blog Data Handling",
+      "status": "error",
+      "message": "Should have rejected invalid blog data",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:22.731Z"
+    },
+    {
+      "name": "Invalid Enrollment Data Handling",
+      "status": "error",
+      "message": "Should have rejected invalid enrollment data",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:22.978Z"
+    },
+    {
+      "name": "404 Error Handling",
+      "status": "success",
+      "message": "Correctly returned 404 for non-existent endpoint",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:23.048Z"
+    },
+    {
+      "name": "Database File Exists",
+      "status": "success",
+      "message": "Database file found at /Users/yashchoube/Desktop/RajeshwariTech/rajeshwari-tech/data/rajeshwari-tech.db",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:23.048Z"
+    },
+    {
+      "name": "Database File Size",
+      "status": "success",
+      "message": "Database file size: 126976 bytes",
+      "data": null,
+      "timestamp": "2025-10-05T14:40:23.048Z"
+    }
+  ],
+  "timestamp": "2025-10-05T14:40:23.048Z"
+}

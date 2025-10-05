@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive API & Database Testing</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .test-content {
+            padding: 30px;
+        }
+        .test-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-button {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        .test-button:hover {
+            background: #7c3aed;
+        }
+        .test-button.success {
+            background: #10b981;
+        }
+        .test-button.error {
+            background: #ef4444;
+        }
+        .test-button.warning {
+            background: #f59e0b;
+        }
+        .result {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error-result {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+        .success-result {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+        }
+        .warning-result {
+            background: #fffbeb;
+            border: 1px solid #fed7aa;
+            color: #d97706;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #10b981; }
+        .status-error { background: #ef4444; }
+        .status-warning { background: #f59e0b; }
+        .status-pending { background: #6b7280; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🧪 Comprehensive API & Database Testing</h1>
+            <p>End-to-end testing of all API endpoints and database operations</p>
+        </div>
+        
+        <div class="test-content">
+            <div class="test-section">
+                <h2>🎯 Test Overview</h2>
+                <p>This comprehensive test suite will validate:</p>
+                <ul>
+                    <li><strong>Blog Management:</strong> Creation, approval, and retrieval</li>
+                    <li><strong>Image Upload:</strong> File upload and storage</li>
+                    <li><strong>Course Enrollment:</strong> Student enrollment process</li>
+                    <li><strong>Enquiry Forms:</strong> Service enquiry submissions</li>
+                    <li><strong>Analytics:</strong> Page visit tracking</li>
+                    <li><strong>Newsletter:</strong> Subscription management</li>
+                    <li><strong>Error Scenarios:</strong> Edge cases and failure handling</li>
+                </ul>
+            </div>
+
+            <div class="test-section">
+                <h2>📊 Test Results Dashboard</h2>
+                <div id="dashboard">
+                    <div class="test-grid">
+                        <div class="result">
+                            <h4>Test Status: <span id="overall-status">Pending</span></h4>
+                            <p>Total Tests: <span id="total-tests">0</span></p>
+                            <p>Passed: <span id="passed-tests">0</span></p>
+                            <p>Failed: <span id="failed-tests">0</span></p>
+                            <p>Warnings: <span id="warning-tests">0</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="test-section">
+                <h2>🚀 Start Comprehensive Testing</h2>
+                <button class="test-button" onclick="runAllTests()">Run All Tests</button>
+                <button class="test-button warning" onclick="runErrorScenarios()">Test Error Scenarios</button>
+                <button class="test-button" onclick="clearResults()">Clear Results</button>
+            </div>
+
+            <div class="test-section">
+                <h2>📝 Test Results</h2>
+                <div id="test-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+        let testCount = 0;
+        let passedCount = 0;
+        let failedCount = 0;
+        let warningCount = 0;
+
+        function updateDashboard() {
+            document.getElementById('total-tests').textContent = testCount;
+            document.getElementById('passed-tests').textContent = passedCount;
+            document.getElementById('failed-tests').textContent = failedCount;
+            document.getElementById('warning-tests').textContent = warningCount;
+            
+            const overallStatus = document.getElementById('overall-status');
+            if (failedCount > 0) {
+                overallStatus.textContent = 'Failed';
+                overallStatus.style.color = '#ef4444';
+            } else if (warningCount > 0) {
+                overallStatus.textContent = 'Warning';
+                overallStatus.style.color = '#f59e0b';
+            } else if (testCount > 0) {
+                overallStatus.textContent = 'Passed';
+                overallStatus.style.color = '#10b981';
+            } else {
+                overallStatus.textContent = 'Pending';
+                overallStatus.style.color = '#6b7280';
+            }
+        }
+
+        function addTestResult(testName, status, message, data = null) {
+            testCount++;
+            if (status === 'success') passedCount++;
+            else if (status === 'error') failedCount++;
+            else if (status === 'warning') warningCount++;
+
+            const result = {
+                name: testName,
+                status: status,
+                message: message,
+                data: data,
+                timestamp: new Date().toISOString()
+            };
+            testResults.push(result);
+            displayTestResult(result);
+            updateDashboard();
+        }
+
+        function displayTestResult(result) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${result.status}-result`;
+            
+            const statusIcon = result.status === 'success' ? '✅' : 
+                              result.status === 'error' ? '❌' : '⚠️';
+            
+            resultDiv.innerHTML = `
+                <div>
+                    <strong>${statusIcon} ${result.name}</strong>
+                    <span class="status-indicator status-${result.status}"></span>
+                    <small>${result.timestamp}</small>
+                </div>
+                <div>${result.message}</div>
+                ${result.data ? `<pre>${JSON.stringify(result.data, null, 2)}</pre>` : ''}
+            `;
+            
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testAPI(endpoint, method = 'GET', data = null, expectedStatus = 200) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(endpoint, options);
+                const responseData = await response.json();
+                
+                if (response.status === expectedStatus) {
+                    return { success: true, data: responseData, status: response.status };
+                } else {
+                    return { success: false, error: `Expected ${expectedStatus}, got ${response.status}`, data: responseData };
+                }
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testBlogCreation() {
+            addTestResult('Blog Creation Test', 'pending', 'Testing blog creation with valid data...');
+            
+            const blogData = {
+                title: `Test Blog ${Date.now()}`,
+                excerpt: 'This is a test blog excerpt for comprehensive testing.',
+                content: '<p>This is test blog content with <strong>HTML formatting</strong> and <em>various elements</em>.</p>',
+                author: 'Test Author',
+                category: 'Technology',
+                featuredImage: '/uploads/blogs/test-image.png'
+            };
+
+            const result = await testAPI('/api/blogs', 'POST', blogData, 200);
+            
+            if (result.success) {
+                addTestResult('Blog Creation Test', 'success', 'Blog created successfully', result.data);
+                return result.data;
+            } else {
+                addTestResult('Blog Creation Test', 'error', `Blog creation failed: ${result.error}`, result.data);
+                return null;
+            }
+        }
+
+        async function testBlogApproval(blogId) {
+            if (!blogId) {
+                addTestResult('Blog Approval Test', 'error', 'No blog ID provided for approval test');
+                return;
+            }
+
+            addTestResult('Blog Approval Test', 'pending', 'Testing blog approval process...');
+            
+            const result = await testAPI('/api/blogs/approve', 'POST', { id: blogId }, 200);
+            
+            if (result.success) {
+                addTestResult('Blog Approval Test', 'success', 'Blog approved successfully', result.data);
+            } else {
+                addTestResult('Blog Approval Test', 'error', `Blog approval failed: ${result.error}`, result.data);
+            }
+        }
+
+        async function testImageUpload() {
+            addTestResult('Image Upload Test', 'pending', 'Testing image upload functionality...');
+            
+            // Create a test image file
+            const canvas = document.createElement('canvas');
+            canvas.width = 200;
+            canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(0, 0, 200, 200);
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.fillText('Test Image', 50, 100);
+            
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+            const formData = new FormData();
+            formData.append('image', blob, 'test-image.png');
+
+            try {
+                const response = await fetch('/api/upload/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    addTestResult('Image Upload Test', 'success', 'Image uploaded successfully', result);
+                    return result.url;
+                } else {
+                    addTestResult('Image Upload Test', 'error', `Image upload failed: ${result.error || 'Unknown error'}`, result);
+                    return null;
+                }
+            } catch (error) {
+                addTestResult('Image Upload Test', 'error', `Image upload error: ${error.message}`);
+                return null;
+            }
+        }
+
+        async function testCourseEnrollment() {
+            addTestResult('Course Enrollment Test', 'pending', 'Testing course enrollment process...');
+            
+            const enrollmentData = {
+                name: 'Test Student',
+                email: 'test@example.com',
+                phone: '+1234567890',
+                courseId: 'test-course',
+                courseName: 'Test Course',
+                experience: 'beginner',
+                goals: 'Learn new skills',
+                referral: 'Website'
+            };
+
+            const result = await testAPI('/api/enrollment', 'POST', enrollmentData, 200);
+            
+            if (result.success) {
+                addTestResult('Course Enrollment Test', 'success', 'Course enrollment successful', result.data);
+            } else {
+                addTestResult('Course Enrollment Test', 'error', `Course enrollment failed: ${result.error}`, result.data);
+            }
+        }
+
+        async function testEnquiryForm() {
+            addTestResult('Enquiry Form Test', 'pending', 'Testing enquiry form submission...');
+            
+            const enquiryData = {
+                name: 'Test Company',
+                email: 'company@example.com',
+                phone: '+1234567890',
+                company: 'Test Corp',
+                service: 'Corporate Training',
+                participants: '25',
+                duration: '3 months',
+                budget: '$10,000',
+                timeline: 'Q1 2024',
+                needs: 'Java training for our development team'
+            };
+
+            const result = await testAPI('/api/enquiry', 'POST', enquiryData, 200);
+            
+            if (result.success) {
+                addTestResult('Enquiry Form Test', 'success', 'Enquiry submitted successfully', result.data);
+            } else {
+                addTestResult('Enquiry Form Test', 'error', `Enquiry submission failed: ${result.error}`, result.data);
+            }
+        }
+
+        async function testAnalyticsTracking() {
+            addTestResult('Analytics Tracking Test', 'pending', 'Testing analytics tracking...');
+            
+            const analyticsData = {
+                page: '/test-page',
+                referrer: 'https://google.com',
+                userAgent: 'Mozilla/5.0 (Test Browser)',
+                timestamp: new Date().toISOString()
+            };
+
+            const result = await testAPI('/api/analytics/track', 'POST', analyticsData, 200);
+            
+            if (result.success) {
+                addTestResult('Analytics Tracking Test', 'success', 'Analytics tracking successful', result.data);
+            } else {
+                addTestResult('Analytics Tracking Test', 'error', `Analytics tracking failed: ${result.error}`, result.data);
+            }
+        }
+
+        async function testNewsletterSubscription() {
+            addTestResult('Newsletter Subscription Test', 'pending', 'Testing newsletter subscription...');
+            
+            const subscriptionData = {
+                email: 'subscriber@example.com',
+                name: 'Test Subscriber',
+                interests: ['Technology', 'Programming', 'Web Development']
+            };
+
+            const result = await testAPI('/api/newsletter/subscribe', 'POST', subscriptionData, 200);
+            
+            if (result.success) {
+                addTestResult('Newsletter Subscription Test', 'success', 'Newsletter subscription successful', result.data);
+            } else {
+                addTestResult('Newsletter Subscription Test', 'error', `Newsletter subscription failed: ${result.error}`, result.data);
+            }
+        }
+
+        async function testErrorScenarios() {
+            addTestResult('Error Scenarios Test', 'pending', 'Testing error handling and edge cases...');
+            
+            // Test invalid blog data
+            const invalidBlogData = {
+                title: '', // Empty title should fail
+                excerpt: 'Short', // Too short excerpt
+                content: '', // Empty content
+                author: '', // Empty author
+                category: '' // Empty category
+            };
+
+            const blogResult = await testAPI('/api/blogs', 'POST', invalidBlogData, 400);
+            if (!blogResult.success) {
+                addTestResult('Invalid Blog Data Test', 'success', 'Correctly rejected invalid blog data', blogResult.data);
+            } else {
+                addTestResult('Invalid Blog Data Test', 'error', 'Should have rejected invalid blog data');
+            }
+
+            // Test invalid enrollment data
+            const invalidEnrollmentData = {
+                name: '', // Empty name
+                email: 'invalid-email', // Invalid email format
+                phone: '', // Empty phone
+                courseId: '', // Empty course ID
+            };
+
+            const enrollmentResult = await testAPI('/api/enrollment', 'POST', invalidEnrollmentData, 400);
+            if (!enrollmentResult.success) {
+                addTestResult('Invalid Enrollment Data Test', 'success', 'Correctly rejected invalid enrollment data', enrollmentResult.data);
+            } else {
+                addTestResult('Invalid Enrollment Data Test', 'error', 'Should have rejected invalid enrollment data');
+            }
+
+            // Test non-existent endpoints
+            const notFoundResult = await testAPI('/api/non-existent-endpoint', 'GET', null, 404);
+            if (!notFoundResult.success) {
+                addTestResult('404 Error Handling Test', 'success', 'Correctly returned 404 for non-existent endpoint');
+            } else {
+                addTestResult('404 Error Handling Test', 'error', 'Should have returned 404 for non-existent endpoint');
+            }
+        }
+
+        async function testDatabaseIntegrity() {
+            addTestResult('Database Integrity Test', 'pending', 'Testing database operations and data integrity...');
+            
+            // Test blog retrieval
+            const blogsResult = await testAPI('/api/blogs', 'GET', null, 200);
+            if (blogsResult.success) {
+                addTestResult('Blog Retrieval Test', 'success', `Retrieved ${blogsResult.data.blogs?.length || 0} blogs`, blogsResult.data);
+            } else {
+                addTestResult('Blog Retrieval Test', 'error', `Blog retrieval failed: ${blogsResult.error}`);
+            }
+
+            // Test admin blog retrieval
+            const adminBlogsResult = await testAPI('/api/blogs?scope=admin', 'GET', null, 200);
+            if (adminBlogsResult.success) {
+                addTestResult('Admin Blog Retrieval Test', 'success', `Retrieved ${adminBlogsResult.data.blogs?.length || 0} admin blogs`, adminBlogsResult.data);
+            } else {
+                addTestResult('Admin Blog Retrieval Test', 'error', `Admin blog retrieval failed: ${adminBlogsResult.error}`);
+            }
+
+            // Test newsletter subscriptions
+            const newsletterResult = await testAPI('/api/newsletter/subscribers', 'GET', null, 200);
+            if (newsletterResult.success) {
+                addTestResult('Newsletter Subscribers Test', 'success', `Retrieved ${newsletterResult.data.subscriptions?.length || 0} newsletter subscriptions`, newsletterResult.data);
+            } else {
+                addTestResult('Newsletter Subscribers Test', 'error', `Newsletter retrieval failed: ${newsletterResult.error}`);
+            }
+        }
+
+        async function runAllTests() {
+            clearResults();
+            addTestResult('Comprehensive Testing', 'pending', 'Starting comprehensive API and database testing...');
+            
+            try {
+                // Test blog creation and approval
+                const blogData = await testBlogCreation();
+                if (blogData && blogData.blogId) {
+                    await testBlogApproval(blogData.blogId);
+                }
+
+                // Test image upload
+                await testImageUpload();
+
+                // Test course enrollment
+                await testCourseEnrollment();
+
+                // Test enquiry form
+                await testEnquiryForm();
+
+                // Test analytics tracking
+                await testAnalyticsTracking();
+
+                // Test newsletter subscription
+                await testNewsletterSubscription();
+
+                // Test database integrity
+                await testDatabaseIntegrity();
+
+                addTestResult('Comprehensive Testing', 'success', 'All tests completed successfully!');
+            } catch (error) {
+                addTestResult('Comprehensive Testing', 'error', `Testing failed: ${error.message}`);
+            }
+        }
+
+        async function runErrorScenarios() {
+            addTestResult('Error Scenarios Testing', 'pending', 'Starting error scenario testing...');
+            await testErrorScenarios();
+            addTestResult('Error Scenarios Testing', 'success', 'Error scenario testing completed!');
+        }
+
+        function clearResults() {
+            testResults = [];
+            testCount = 0;
+            passedCount = 0;
+            failedCount = 0;
+            warningCount = 0;
+            document.getElementById('test-results').innerHTML = '';
+            updateDashboard();
+        }
+
+        // Initialize dashboard
+        updateDashboard();
+    </script>
+</body>
+</html>
