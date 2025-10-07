@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Admin Portal Functionality Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 12px 20px; margin: 8px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 6px; overflow-x: auto; border: 1px solid #e9ecef; }
+        .status-badge { 
+            padding: 4px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: bold;
+            display: inline-block;
+            margin: 2px;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-confirmed { background: #d1fae5; color: #065f46; }
+        .status-completed { background: #dbeafe; color: #1e40af; }
+        .status-cancelled { background: #f3f4f6; color: #374151; }
+        .status-enrolled { background: #e0e7ff; color: #3730a3; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .loading { opacity: 0.6; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Complete Admin Portal Functionality Test</h1>
+        
+        <div class="test-section success">
+            <h2>✅ Admin Portal Access</h2>
+            <p><strong>URL:</strong> <a href="http://localhost:3000/admin" target="_blank" style="color: #007bff; text-decoration: none;">http://localhost:3000/admin</a></p>
+            <p><strong>Login URL:</strong> <a href="http://localhost:3000/admin/login" target="_blank" style="color: #007bff; text-decoration: none;">http://localhost:3000/admin/login</a></p>
+            <p><strong>Username:</strong> <code>admin</code></p>
+            <p><strong>Password:</strong> <code>admin123!</code></p>
+        </div>
+
+        <div class="test-section info">
+            <h2>🔧 New Status Update Features</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>📅 Demo Bookings Status</h3>
+                    <div>
+                        <span class="status-badge status-pending">Pending</span>
+                        <span class="status-badge status-confirmed">Confirmed</span>
+                        <span class="status-badge status-completed">Completed</span>
+                        <span class="status-badge status-cancelled">Cancelled</span>
+                    </div>
+                    <p><em>Admin can update status via dropdown</em></p>
+                </div>
+                <div class="card">
+                    <h3>🎓 Enrollments Status</h3>
+                    <div>
+                        <span class="status-badge status-pending">Pending</span>
+                        <span class="status-badge status-confirmed">Confirmed</span>
+                        <span class="status-badge status-enrolled">Enrolled</span>
+                        <span class="status-badge status-completed">Completed</span>
+                        <span class="status-badge status-cancelled">Cancelled</span>
+                    </div>
+                    <p><em>Admin can update status via dropdown</em></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 API & Database Tests</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Authentication Tests</h3>
+                    <button class="btn-primary" onclick="testLogin()">Test Admin Login</button>
+                    <button class="btn-warning" onclick="testAuthCheck()">Test Auth Check</button>
+                    <button class="btn-danger" onclick="testLogout()">Test Logout</button>
+                </div>
+                <div class="card">
+                    <h3>Status Update Tests</h3>
+                    <button class="btn-success" onclick="testDemoStatusUpdate()">Test Demo Status Update</button>
+                    <button class="btn-success" onclick="testEnrollmentStatusUpdate()">Test Enrollment Status Update</button>
+                </div>
+                <div class="card">
+                    <h3>Data Retrieval Tests</h3>
+                    <button class="btn-primary" onclick="testGetDemoBookings()">Get Demo Bookings</button>
+                    <button class="btn-primary" onclick="testGetEnrollments()">Get Enrollments</button>
+                    <button class="btn-primary" onclick="testGetBlogs()">Get Blogs</button>
+                </div>
+            </div>
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Database Status</h2>
+            <button class="btn-primary" onclick="testDatabaseConnection()">Test Database Connection</button>
+            <button class="btn-primary" onclick="testDatabaseData()">Check Database Data</button>
+            <div id="db-results"></div>
+        </div>
+
+        <div class="test-section warning">
+            <h2>🔍 Troubleshooting</h2>
+            <p><strong>If admin portal appears blank:</strong></p>
+            <ul>
+                <li>Clear browser cache (Ctrl+F5 or Cmd+Shift+R)</li>
+                <li>Check browser console for JavaScript errors</li>
+                <li>Try incognito/private browsing mode</li>
+                <li>Verify server is running on port 3000</li>
+            </ul>
+            <p><strong>If login fails:</strong></p>
+            <ul>
+                <li>Username: <code>admin</code></li>
+                <li>Password: <code>admin123!</code> (note the exclamation mark)</li>
+                <li>Check network tab for API errors</li>
+            </ul>
+        </div>
+
+        <div class="test-section success">
+            <h2>🎉 Features Summary</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>✅ Admin Dashboard</h3>
+                    <ul>
+                        <li>Blog management with counts</li>
+                        <li>User management (demo bookings & enrollments)</li>
+                        <li>Statistics and analytics</li>
+                        <li>Search and filter functionality</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>✅ Status Management</h3>
+                    <ul>
+                        <li>Interactive status dropdowns</li>
+                        <li>Real-time status updates</li>
+                        <li>Visual status indicators</li>
+                        <li>Error handling and feedback</li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>✅ Security & Authentication</h3>
+                    <ul>
+                        <li>Secure admin login</li>
+                        <li>Session management</li>
+                        <li>Protected API endpoints</li>
+                        <li>Rate limiting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sessionCookie = '';
+        let isAuthenticated = false;
+
+        async function testLogin() {
+            try {
+                showResult('Login Test', 'Testing...', 'Attempting to login...');
+                const response = await fetch('http://localhost:3000/api/admin/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123!' })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    sessionCookie = data.data.sessionId;
+                    isAuthenticated = true;
+                    showResult('Login Test', 'SUCCESS', data);
+                } else {
+                    showResult('Login Test', 'ERROR', data);
+                }
+            } catch (error) {
+                showResult('Login Test', 'ERROR', error.message);
+            }
+        }
+
+        async function testAuthCheck() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/auth/check');
+                const data = await response.json();
+                showResult('Auth Check', response.status, data);
+            } catch (error) {
+                showResult('Auth Check', 'ERROR', error.message);
+            }
+        }
+
+        async function testLogout() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Cookie': `admin-session=${sessionCookie}` }
+                });
+                const data = await response.json();
+                isAuthenticated = false;
+                sessionCookie = '';
+                showResult('Logout Test', response.status, data);
+            } catch (error) {
+                showResult('Logout Test', 'ERROR', error.message);
+            }
+        }
+
+        async function testDemoStatusUpdate() {
+            if (!isAuthenticated) {
+                showResult('Demo Status Update', 'ERROR', 'Please login first');
+                return;
+            }
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/demo-bookings/update-status', {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cookie': `admin-session=${sessionCookie}`
+                    },
+                    body: JSON.stringify({ id: 1, status: 'confirmed' })
+                });
+                const data = await response.json();
+                showResult('Demo Status Update', response.status, data);
+            } catch (error) {
+                showResult('Demo Status Update', 'ERROR', error.message);
+            }
+        }
+
+        async function testEnrollmentStatusUpdate() {
+            if (!isAuthenticated) {
+                showResult('Enrollment Status Update', 'ERROR', 'Please login first');
+                return;
+            }
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/enrollments/update-status', {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cookie': `admin-session=${sessionCookie}`
+                    },
+                    body: JSON.stringify({ id: 1, status: 'enrolled' })
+                });
+                const data = await response.json();
+                showResult('Enrollment Status Update', response.status, data);
+            } catch (error) {
+                showResult('Enrollment Status Update', 'ERROR', error.message);
+            }
+        }
+
+        async function testGetDemoBookings() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/demo-bookings');
+                const data = await response.json();
+                showResult('Get Demo Bookings', response.status, data);
+            } catch (error) {
+                showResult('Get Demo Bookings', 'ERROR', error.message);
+            }
+        }
+
+        async function testGetEnrollments() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/enrollments');
+                const data = await response.json();
+                showResult('Get Enrollments', response.status, data);
+            } catch (error) {
+                showResult('Get Enrollments', 'ERROR', error.message);
+            }
+        }
+
+        async function testGetBlogs() {
+            try {
+                const response = await fetch('http://localhost:3000/api/blogs');
+                const data = await response.json();
+                showResult('Get Blogs', response.status, data);
+            } catch (error) {
+                showResult('Get Blogs', 'ERROR', error.message);
+            }
+        }
+
+        async function testDatabaseConnection() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/demo-bookings');
+                const data = await response.json();
+                if (data.demoBookings) {
+                    showDBResult('Database Connection', 'SUCCESS', `Connected successfully. Found ${data.demoBookings.length} demo bookings.`);
+                } else {
+                    showDBResult('Database Connection', 'ERROR', 'No data returned');
+                }
+            } catch (error) {
+                showDBResult('Database Connection', 'ERROR', error.message);
+            }
+        }
+
+        async function testDatabaseData() {
+            try {
+                const [demoResponse, enrollResponse, blogsResponse] = await Promise.all([
+                    fetch('http://localhost:3000/api/admin/demo-bookings'),
+                    fetch('http://localhost:3000/api/admin/enrollments'),
+                    fetch('http://localhost:3000/api/blogs')
+                ]);
+
+                const demoData = await demoResponse.json();
+                const enrollData = await enrollResponse.json();
+                const blogsData = await blogsResponse.json();
+
+                const summary = {
+                    demoBookings: demoData.demoBookings?.length || 0,
+                    enrollments: enrollData.enrollments?.length || 0,
+                    blogs: blogsData.blogs?.length || 0
+                };
+
+                showDBResult('Database Data', 'SUCCESS', summary);
+            } catch (error) {
+                showDBResult('Database Data', 'ERROR', error.message);
+            }
+        }
+
+        function showResult(testName, status, data) {
+            const resultsDiv = document.getElementById('test-results');
+            const isSuccess = status === 200 || status === 'SUCCESS';
+            const className = isSuccess ? 'success' : 'error';
+            
+            resultsDiv.innerHTML += `
+                <div class="${className}">
+                    <h3>${testName}</h3>
+                    <p><strong>Status:</strong> ${status}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        function showDBResult(testName, status, data) {
+            const resultsDiv = document.getElementById('db-results');
+            const isSuccess = status === 'SUCCESS';
+            const className = isSuccess ? 'success' : 'error';
+            
+            resultsDiv.innerHTML += `
+                <div class="${className}">
+                    <h3>${testName}</h3>
+                    <p><strong>Status:</strong> ${status}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        // Auto-run initial tests
+        window.onload = function() {
+            testAuthCheck();
+            testDatabaseConnection();
+        };
+    </script>
+</body>
+</html>

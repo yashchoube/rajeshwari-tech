@@ -171,10 +171,6 @@ export const getAllEnrollments = () => {
   return stmt.all();
 };
 
-export const updateEnrollmentStatus = (id: number, status: string) => {
-  const stmt = db.prepare('UPDATE enrollments SET status = ?, created_at = created_at WHERE id = ?');
-  return stmt.run(status, id);
-};
 
 // Analytics tracking
 export const trackPageVisit = (page: string, referrer?: string, userAgent?: string) => {
@@ -340,6 +336,57 @@ export const getNewsletterSubscriptionsByInterest = (interest: string) => {
 export const unsubscribeNewsletter = (email: string) => {
   const stmt = db.prepare('UPDATE newsletter_subscriptions SET status = "unsubscribed" WHERE email = ?');
   return stmt.run(email);
+};
+
+// Status update functions for admin
+export const updateDemoBookingStatus = (id: number, status: string) => {
+  try {
+    const stmt = db.prepare('UPDATE demo_bookings SET status = ? WHERE id = ?');
+    const result = stmt.run(status, id);
+    
+    if (result.changes === 0) {
+      return { success: false, error: 'Demo booking not found' };
+    }
+    
+    // Get updated record
+    const updatedRecord = db.prepare('SELECT * FROM demo_bookings WHERE id = ?').get(id);
+    
+    return { 
+      success: true, 
+      data: updatedRecord,
+      message: 'Demo booking status updated successfully'
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+};
+
+export const updateEnrollmentStatus = (id: number, status: string) => {
+  try {
+    const stmt = db.prepare('UPDATE enrollments SET status = ? WHERE id = ?');
+    const result = stmt.run(status, id);
+    
+    if (result.changes === 0) {
+      return { success: false, error: 'Enrollment not found' };
+    }
+    
+    // Get updated record
+    const updatedRecord = db.prepare('SELECT * FROM enrollments WHERE id = ?').get(id);
+    
+    return { 
+      success: true, 
+      data: updatedRecord,
+      message: 'Enrollment status updated successfully'
+    };
+  } catch (error) {
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
 };
 
 // Initialize database on import

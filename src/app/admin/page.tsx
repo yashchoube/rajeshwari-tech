@@ -1,6 +1,9 @@
-import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions, getAnalyticsData, getReferrerData } from '@/lib/database';
+import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions, getAnalyticsData, getReferrerData, getAllBlogs, getAllBlogsAdmin } from '@/lib/database';
 import { Suspense } from 'react';
 import EnrollmentCard from '@/components/EnrollmentCard';
+import { AuthService } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { redirect } from 'next/navigation';
 
 interface DemoBooking {
   id: number;
@@ -51,12 +54,77 @@ interface ReferrerData {
   last_visit: string;
 }
 
+interface Blog {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  featured_image: string;
+  category: string;
+  tags: string;
+  status: string;
+  featured: boolean;
+  views: number;
+  created_at: string;
+  updated_at: string;
+}
+
 async function AdminDashboard() {
-  const demoBookings = getAllDemoBookings() as DemoBooking[];
-  const enrollments = getAllEnrollments() as Enrollment[];
-  const newsletterSubscriptions = getAllNewsletterSubscriptions() as NewsletterSubscription[];
-  const analyticsData = getAnalyticsData() as AnalyticsData[];
-  const referrerData = getReferrerData() as ReferrerData[];
+  // Fetch data from API instead of calling database functions directly
+  let demoBookings: DemoBooking[] = [];
+  let enrollments: Enrollment[] = [];
+  let newsletterSubscriptions: NewsletterSubscription[] = [];
+  let analyticsData: AnalyticsData[] = [];
+  let referrerData: ReferrerData[] = [];
+  let blogs: Blog[] = [];
+  let allBlogs: Blog[] = [];
+
+  try {
+    // Fetch demo bookings
+    const demoResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/admin/demo-bookings`, {
+      cache: 'no-store'
+    });
+    if (demoResponse.ok) {
+      const demoData = await demoResponse.json();
+      demoBookings = demoData.demoBookings || [];
+    }
+
+    // Fetch enrollments
+    const enrollResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/admin/enrollments`, {
+      cache: 'no-store'
+    });
+    if (enrollResponse.ok) {
+      const enrollData = await enrollResponse.json();
+      enrollments = enrollData.enrollments || [];
+    }
+
+    // Fetch blogs
+    const blogsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/blogs?scope=admin`, {
+      cache: 'no-store'
+    });
+    if (blogsResponse.ok) {
+      const blogsData = await blogsResponse.json();
+      allBlogs = blogsData.blogs || [];
+      blogs = allBlogs.filter((blog: Blog) => blog.status === 'published');
+    }
+
+    // Fetch other data (keeping direct calls for now)
+    newsletterSubscriptions = getAllNewsletterSubscriptions() as NewsletterSubscription[];
+    analyticsData = getAnalyticsData() as AnalyticsData[];
+    referrerData = getReferrerData() as ReferrerData[];
+  } catch (error) {
+    console.error('Error fetching admin data:', error);
+    // Fallback to direct database calls
+    demoBookings = getAllDemoBookings() as DemoBooking[];
+    enrollments = getAllEnrollments() as Enrollment[];
+    newsletterSubscriptions = getAllNewsletterSubscriptions() as NewsletterSubscription[];
+    analyticsData = getAnalyticsData() as AnalyticsData[];
+    referrerData = getReferrerData() as ReferrerData[];
+    blogs = getAllBlogs();
+    allBlogs = getAllBlogsAdmin();
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -234,6 +302,33 @@ async function AdminDashboard() {
               {demoBookings.length + enrollments.length + newsletterSubscriptions.length}
             </div>
             <div className="text-gray-600">Total Leads</div>
+          </div>
+        </div>
+
+        {/* Blog Management Section */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Blog Management ({allBlogs.length} total, {blogs.length} published)
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{blogs.length}</div>
+                <div className="text-gray-600">Published Blogs</div>
+              </div>
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">{allBlogs.length - blogs.length}</div>
+                <div className="text-gray-600">Draft/Pending Blogs</div>
+              </div>
+            </div>
+            <div className="mt-4">
+              <a 
+                href="/admin/blogs" 
+                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                Manage Blogs
+              </a>
+            </div>
           </div>
         </div>
       </div>
