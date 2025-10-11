@@ -20,38 +20,9 @@ const ADMIN_CREDENTIALS = {
   email: process.env.ADMIN_EMAIL || 'admin@rajeshwaritech.com'
 };
 
-// Simple file-based session storage for development
-// In production, use Redis or database
-import fs from 'fs';
-import path from 'path';
-
-const SESSIONS_FILE = path.join(process.cwd(), 'sessions.json');
-
-// Load sessions from file
-const loadSessions = (): Map<string, { user: AdminUser; expiresAt: number }> => {
-  try {
-    if (fs.existsSync(SESSIONS_FILE)) {
-      const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
-      const sessionsData = JSON.parse(data);
-      return new Map(Object.entries(sessionsData));
-    }
-  } catch (error) {
-    console.error('Error loading sessions:', error);
-  }
-  return new Map();
-};
-
-// Save sessions to file
-const saveSessions = (sessions: Map<string, { user: AdminUser; expiresAt: number }>) => {
-  try {
-    const sessionsData = Object.fromEntries(sessions);
-    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessionsData, null, 2));
-  } catch (error) {
-    console.error('Error saving sessions:', error);
-  }
-};
-
-let sessions = loadSessions();
+// In-memory session storage for serverless environment
+// Sessions will reset on cold start, but that's acceptable for admin sessions
+let sessions = new Map<string, { user: AdminUser; expiresAt: number }>();
 
 export class AuthService {
   static generateSessionId(): string {
@@ -63,14 +34,8 @@ export class AuthService {
     const sessionId = this.generateSessionId();
     const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
     
-    // Load current sessions
-    sessions = loadSessions();
-    
-    // Store session
+    // Store session in memory (serverless-compatible)
     sessions.set(sessionId, { user, expiresAt });
-    
-    // Save to file
-    saveSessions(sessions);
     
     console.log('AuthService.createSession - created session:', sessionId);
     return sessionId;
@@ -78,10 +43,7 @@ export class AuthService {
 
   static getSession(sessionId: string): AdminUser | null {
     try {
-      console.log('AuthService.getSession - sessionId length:', sessionId.length);
-      
-      // Load current sessions
-      sessions = loadSessions();
+      console.log('AuthService.getSession - sessionId length:', sessionId?.length || 0);
       
       const session = sessions.get(sessionId);
       if (!session) {
@@ -93,7 +55,6 @@ export class AuthService {
       if (Date.now() > session.expiresAt) {
         console.log('AuthService.getSession - session expired');
         sessions.delete(sessionId);
-        saveSessions(sessions);
         return null;
       }
       
@@ -106,15 +67,8 @@ export class AuthService {
   }
 
   static destroySession(sessionId: string): void {
-    // Load current sessions
-    sessions = loadSessions();
-    
-    // Remove session
+    // Remove session from memory
     sessions.delete(sessionId);
-    
-    // Save to file
-    saveSessions(sessions);
-    
     console.log('AuthService.destroySession - session removed');
   }
 
