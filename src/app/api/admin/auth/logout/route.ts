@@ -16,13 +16,14 @@ export async function POST(request: NextRequest) {
       message: 'Logout successful'
     });
     
-    // Clear the session cookie
+    // Clear the session cookie with same settings as login
     response.cookies.set('admin-session', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 0,
-      path: '/'
+      maxAge: 0, // Immediately expire
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.rajeshwaritech.com' : undefined
     });
     
     return response;

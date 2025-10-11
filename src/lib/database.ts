@@ -100,6 +100,21 @@ export const initDatabase = () => {
     )
   `);
 
+  // Create enquiries table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS enquiries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      phone TEXT,
+      company TEXT,
+      service TEXT NOT NULL,
+      message TEXT,
+      status TEXT DEFAULT 'new',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   console.log('Database initialized successfully');
 };
 

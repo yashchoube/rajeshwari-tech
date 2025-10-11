@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { trackPageVisit } from '@/lib/database';
+import { trackPageVisit } from '@/lib/neon-database';
+import { createSecureAPI, SECURITY_CONFIGS } from '@/lib/apiSecurity';
 
-export async function POST(request: NextRequest) {
+// Create secure API handler for analytics
+const secureAPI = createSecureAPI({
+  rateLimit: {
+    maxRequests: 50, // Allow more requests for analytics
+    windowMs: 15 * 60 * 1000
+  }
+});
+
+export const POST = secureAPI(async function(request: NextRequest) {
   try {
     const body = await request.json();
     const { page, referrer, userAgent } = body;
@@ -12,7 +21,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    trackPageVisit(page, referrer, userAgent);
+    await trackPageVisit(page, referrer, userAgent);
     
     return NextResponse.json({ 
       success: true, 
@@ -24,4 +33,4 @@ export async function POST(request: NextRequest) {
       error: 'Failed to track page visit' 
     }, { status: 500 });
   }
-}
+});

@@ -1,31 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveDemoBooking } from '@/lib/database';
+import { saveDemoBooking } from '@/lib/neon-database';
+import { createSecureAPI, SECURITY_CONFIGS } from '@/lib/apiSecurity';
+import { Validator } from '@/lib/validation';
 
-export async function POST(request: NextRequest) {
+// Create secure API handler
+const secureAPI = createSecureAPI(SECURITY_CONFIGS.PUBLIC_FORM);
+
+export const POST = secureAPI(async function(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate required fields
+    // Enhanced validation with security
+    const validator = new Validator();
+    const validationResult = validator
+      .required('name', body.name)
+      .minLength('name', body.name, 2)
+      .maxLength('name', body.name, 100)
+      .required('email', body.email)
+      .email('email', body.email)
+      .required('phone', body.phone)
+      .validatePhone('phone', body.phone)
+      .required('course', body.course)
+      .required('experience', body.experience)
+      .required('preferredTime', body.preferredTime)
+      .maxLength('message', body.message, 1000)
+      .getResult();
+
+    if (!validationResult.isValid) {
+      return NextResponse.json(
+        { 
+          error: 'Validation failed',
+          details: validationResult.errors 
+        },
+        { status: 400 }
+      );
+    }
+
     const { name, email, phone, course, experience, preferredTime, message } = body;
-    
-    if (!name || !email || !phone || !course || !experience || !preferredTime) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    // Save to database
-    const bookingId = saveDemoBooking({
+    // Save to Neon PostgreSQL database
+    const bookingId = await saveDemoBooking({
       name,
       email,
       phone,
@@ -57,4 +71,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

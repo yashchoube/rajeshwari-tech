@@ -1,31 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { saveEnrollment } from '@/lib/database';
+import { Validator } from '@/lib/validation';
+import { saveEnrollment } from '@/lib/neon-database';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validate required fields
+    // Enhanced validation with security
+    const validator = new Validator();
+    const validationResult = validator
+      .required('name', body.name)
+      .minLength('name', body.name, 2)
+      .maxLength('name', body.name, 100)
+      .required('email', body.email)
+      .email('email', body.email)
+      .required('phone', body.phone)
+      .validatePhone('phone', body.phone)
+      .required('courseId', body.courseId)
+      .required('courseName', body.courseName)
+      .required('experience', body.experience)
+      .maxLength('goals', body.goals, 500)
+      .maxLength('referral', body.referral, 200)
+      .getResult();
+
+    if (!validationResult.isValid) {
+      return NextResponse.json(
+        { 
+          error: 'Validation failed',
+          details: validationResult.errors 
+        },
+        { status: 400 }
+      );
+    }
+
     const { name, email, phone, courseId, courseName, experience, goals, referral } = body;
-    
-    if (!name || !email || !phone || !courseId || !courseName || !experience) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    // Save to database
-    const enrollmentId = saveEnrollment({
+    // Save to Neon PostgreSQL database
+    const enrollmentId = await saveEnrollment({
       name,
       email,
       phone,

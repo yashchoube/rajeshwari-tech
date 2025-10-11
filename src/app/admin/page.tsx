@@ -1,9 +1,5 @@
-import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions, getAnalyticsData, getReferrerData, getAllBlogs, getAllBlogsAdmin } from '@/lib/database';
 import { Suspense } from 'react';
-import EnrollmentCard from '@/components/EnrollmentCard';
-import { AuthService } from '@/lib/auth';
-import { NextRequest } from 'next/server';
-import { redirect } from 'next/navigation';
+import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions, getAnalyticsData, getReferrerData, getAllBlogs, getAllBlogsAdmin, getEnquiries } from '@/lib/neon-database';
 
 interface DemoBooking {
   id: number;
@@ -71,10 +67,23 @@ interface Blog {
   updated_at: string;
 }
 
+interface Enquiry {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string;
+  company?: string;
+  service: string;
+  message?: string;
+  status: string;
+  created_at: string;
+}
+
 async function AdminDashboard() {
-  // Fetch data from API instead of calling database functions directly
+  // Fetch data from database
   let demoBookings: DemoBooking[] = [];
   let enrollments: Enrollment[] = [];
+  let enquiries: Enquiry[] = [];
   let newsletterSubscriptions: NewsletterSubscription[] = [];
   let analyticsData: AnalyticsData[] = [];
   let referrerData: ReferrerData[] = [];
@@ -82,48 +91,26 @@ async function AdminDashboard() {
   let allBlogs: Blog[] = [];
 
   try {
-    // Fetch demo bookings
-    const demoResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/admin/demo-bookings`, {
-      cache: 'no-store'
-    });
-    if (demoResponse.ok) {
-      const demoData = await demoResponse.json();
-      demoBookings = demoData.demoBookings || [];
-    }
-
-    // Fetch enrollments
-    const enrollResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/admin/enrollments`, {
-      cache: 'no-store'
-    });
-    if (enrollResponse.ok) {
-      const enrollData = await enrollResponse.json();
-      enrollments = enrollData.enrollments || [];
-    }
-
-    // Fetch blogs
-    const blogsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/blogs?scope=admin`, {
-      cache: 'no-store'
-    });
-    if (blogsResponse.ok) {
-      const blogsData = await blogsResponse.json();
-      allBlogs = blogsData.blogs || [];
-      blogs = allBlogs.filter((blog: Blog) => blog.status === 'published');
-    }
-
-    // Fetch other data (keeping direct calls for now)
-    newsletterSubscriptions = getAllNewsletterSubscriptions() as NewsletterSubscription[];
-    analyticsData = getAnalyticsData() as AnalyticsData[];
-    referrerData = getReferrerData() as ReferrerData[];
+    // Fetch all data from Neon database
+    demoBookings = await getAllDemoBookings();
+    enrollments = await getAllEnrollments();
+    enquiries = await getEnquiries();
+    newsletterSubscriptions = await getAllNewsletterSubscriptions();
+    analyticsData = await getAnalyticsData();
+    referrerData = await getReferrerData();
+    blogs = await getAllBlogs();
+    allBlogs = await getAllBlogsAdmin();
   } catch (error) {
     console.error('Error fetching admin data:', error);
-    // Fallback to direct database calls
-    demoBookings = getAllDemoBookings() as DemoBooking[];
-    enrollments = getAllEnrollments() as Enrollment[];
-    newsletterSubscriptions = getAllNewsletterSubscriptions() as NewsletterSubscription[];
-    analyticsData = getAnalyticsData() as AnalyticsData[];
-    referrerData = getReferrerData() as ReferrerData[];
-    blogs = getAllBlogs();
-    allBlogs = getAllBlogsAdmin();
+    // Reset to empty arrays if database fails
+    demoBookings = [];
+    enrollments = [];
+    enquiries = [];
+    newsletterSubscriptions = [];
+    analyticsData = [];
+    referrerData = [];
+    blogs = [];
+    allBlogs = [];
   }
 
   return (
@@ -161,13 +148,11 @@ async function AdminDashboard() {
                       {booking.message && (
                         <p><strong>Message:</strong> {booking.message}</p>
                       )}
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                        booking.status === 'pending' 
-                          ? 'bg-yellow-100 text-yellow-800' 
-                          : 'bg-green-100 text-green-800'
-                      }`}>
-                        {booking.status}
-                      </span>
+                      <p><strong>Status:</strong> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          booking.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>{booking.status}</span></p>
                     </div>
                   </div>
                 ))
@@ -185,16 +170,129 @@ async function AdminDashboard() {
                 <p className="text-gray-500 text-center py-8">No enrollments yet</p>
               ) : (
                 enrollments.map((enrollment) => (
-                  <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
+                  <div key={enrollment.id} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-gray-900">{enrollment.name}</h3>
+                      <span className="text-xs text-gray-500">
+                        {new Date(enrollment.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p><strong>Email:</strong> {enrollment.email}</p>
+                      <p><strong>Phone:</strong> {enrollment.phone}</p>
+                      <p><strong>Course:</strong> {enrollment.course_name}</p>
+                      <p><strong>Experience:</strong> {enrollment.experience}</p>
+                      {enrollment.goals && (
+                        <p><strong>Goals:</strong> {enrollment.goals}</p>
+                      )}
+                      {enrollment.referral && (
+                        <p><strong>Referral:</strong> {enrollment.referral}</p>
+                      )}
+                      <p><strong>Status:</strong> <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          enrollment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          enrollment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>{enrollment.status}</span></p>
+                    </div>
+                  </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Analytics */}
+          {/* Enquiries */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Contact Enquiries ({enquiries.length})
+              </h2>
+              <a
+                href="/admin/enquiries"
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                View All
+              </a>
+            </div>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {enquiries.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No enquiries yet</p>
+              ) : (
+                enquiries.slice(0, 5).map((enquiry) => (
+                  <div key={enquiry.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium text-gray-900">{enquiry.name}</h3>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          enquiry.status === 'new' ? 'bg-blue-100 text-blue-800' :
+                          enquiry.status === 'contacted' ? 'bg-green-100 text-green-800' :
+                          enquiry.status === 'closed' ? 'bg-gray-100 text-gray-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>{enquiry.status}</span>
+                        <span className="text-xs text-gray-500">
+                          {new Date(enquiry.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p><strong>Email:</strong> {enquiry.email}</p>
+                      {enquiry.phone && (
+                        <p><strong>Phone:</strong> {enquiry.phone}</p>
+                      )}
+                      {enquiry.company && (
+                        <p><strong>Company:</strong> {enquiry.company}</p>
+                      )}
+                      <p><strong>Service:</strong> {enquiry.service}</p>
+                      {enquiry.message && (
+                        <p className="text-gray-700 line-clamp-2"><strong>Message:</strong> {enquiry.message}</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+              {enquiries.length > 5 && (
+                <div className="text-center pt-4">
+                  <a
+                    href="/admin/enquiries"
+                    className="text-indigo-600 hover:text-indigo-500 text-sm font-medium"
+                  >
+                    View {enquiries.length - 5} more enquiries →
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Newsletter Subscriptions */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Page Analytics
+              Newsletter Subscriptions ({newsletterSubscriptions.length})
+            </h2>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {newsletterSubscriptions.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No subscriptions yet</p>
+              ) : (
+                newsletterSubscriptions.map((sub) => (
+                  <div key={sub.id} className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-900">{sub.email}</h3>
+                    <p className="text-sm text-gray-600">
+                      <strong>Interests:</strong> {sub.interests}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <strong>Status:</strong> {sub.status}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Analytics Overview */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Analytics Overview
             </h2>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {analyticsData.length === 0 ? (
@@ -202,106 +300,17 @@ async function AdminDashboard() {
               ) : (
                 analyticsData.map((data) => (
                   <div key={data.page} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-gray-900">{data.page}</h3>
-                      <span className="text-xs text-gray-500">
-                        {new Date(data.last_visit).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p><strong>Visits:</strong> {data.visits}</p>
-                      <p><strong>Unique Referrers:</strong> {data.unique_referrers}</p>
-                    </div>
+                    <h3 className="font-medium text-gray-900">{data.page}</h3>
+                    <p className="text-sm text-gray-600">
+                      <strong>Visits:</strong> {data.visits}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <strong>Last Visit:</strong> {new Date(data.last_visit).toLocaleDateString()}
+                    </p>
                   </div>
                 ))
               )}
             </div>
-          </div>
-
-          {/* Referrers */}
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Top Referrers
-            </h2>
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {referrerData.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No referrer data yet</p>
-              ) : (
-                referrerData.map((data) => (
-                  <div key={data.referrer} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-medium text-gray-900 text-sm truncate">{data.referrer}</h3>
-                      <span className="text-xs text-gray-500">
-                        {new Date(data.last_visit).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      <p><strong>Visits:</strong> {data.visits}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Newsletter Subscriptions */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Newsletter Subscriptions ({newsletterSubscriptions.length})
-          </h2>
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {newsletterSubscriptions.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No newsletter subscriptions yet</p>
-            ) : (
-              newsletterSubscriptions.map((subscription) => (
-                <div key={subscription.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-gray-900">{subscription.email}</h3>
-                    <span className="text-xs text-gray-500">
-                      {new Date(subscription.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    {subscription.name && (
-                      <p><strong>Name:</strong> {subscription.name}</p>
-                    )}
-                    <p><strong>Interests:</strong> {subscription.interests}</p>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs ${
-                      subscription.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {subscription.status}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Summary Stats */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <div className="text-3xl font-bold text-indigo-600">{demoBookings.length}</div>
-            <div className="text-gray-600">Total Demo Bookings</div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <div className="text-3xl font-bold text-green-600">{enrollments.length}</div>
-            <div className="text-gray-600">Total Enrollments</div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <div className="text-3xl font-bold text-purple-600">
-              {analyticsData.reduce((total, data) => total + data.visits, 0)}
-            </div>
-            <div className="text-gray-600">Total Page Views</div>
-          </div>
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <div className="text-3xl font-bold text-orange-600">
-              {demoBookings.length + enrollments.length + newsletterSubscriptions.length}
-            </div>
-            <div className="text-gray-600">Total Leads</div>
           </div>
         </div>
 
@@ -321,13 +330,39 @@ async function AdminDashboard() {
                 <div className="text-gray-600">Draft/Pending Blogs</div>
               </div>
             </div>
-            <div className="mt-4">
-              <a 
-                href="/admin/blogs" 
-                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            <div className="mt-6 text-center">
+              <a
+                href="/admin/blogs"
+                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                Manage Blogs
+                Go to Blog Management
               </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Referrer Data */}
+        <div className="mt-8">
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Referrer Data
+            </h2>
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {referrerData.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">No referrer data yet</p>
+              ) : (
+                referrerData.map((data) => (
+                  <div key={data.referrer} className="border border-gray-200 rounded-lg p-4">
+                    <h3 className="font-medium text-gray-900">{data.referrer}</h3>
+                    <p className="text-sm text-gray-600">
+                      <strong>Visits:</strong> {data.visits}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <strong>Last Visit:</strong> {new Date(data.last_visit).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

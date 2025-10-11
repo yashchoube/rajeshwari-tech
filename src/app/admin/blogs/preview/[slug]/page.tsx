@@ -1,6 +1,6 @@
 import { Calendar, User, Eye, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { approveBlog } from '@/lib/database';
+// Note: approveBlog is not used in this component, it's handled by ApproveActions
 import ApproveActions from '@/components/ApproveActions';
 
 interface PageProps {
@@ -17,14 +17,16 @@ interface BlogRecord {
   featured_image?: string;
   category: string;
   tags?: string;
+  status: string;
+  featured: boolean;
   views: number;
   created_at: string;
 }
 
 export default async function AdminPreviewPage({ params }: PageProps) {
   const { slug } = await params;
-  const { getBlogBySlugAdmin } = await import('@/lib/database');
-  const blog = getBlogBySlugAdmin(slug) as BlogRecord | undefined;
+  const { getBlogBySlugAdmin } = await import('@/lib/neon-database');
+  const blog = await getBlogBySlugAdmin(slug) as BlogRecord | undefined;
 
   if (!blog) {
     return (

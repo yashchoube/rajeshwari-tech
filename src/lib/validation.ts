@@ -130,6 +130,34 @@ export class Validator {
     };
   }
 
+  sanitizeInput(field: string, value: string): string {
+    if (!value) return '';
+    
+    // Remove potentially dangerous characters
+    return value
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+      .replace(/javascript:/gi, '') // Remove javascript: protocols
+      .replace(/on\w+\s*=/gi, '') // Remove event handlers
+      .trim()
+      .substring(0, 1000); // Limit length
+  }
+
+  validatePhone(field: string, value: string, customMessage?: string): this {
+    if (value && !this.isValidPhone(value)) {
+      this.errors.push({
+        field,
+        message: customMessage || `${field} must be a valid phone number`,
+        code: 'INVALID_PHONE'
+      });
+    }
+    return this;
+  }
+
+  private isValidPhone(phone: string): boolean {
+    const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+    return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+  }
+
   static validateBlog(data: any): ValidationResult {
     return new Validator()
       .required('title', data.title)

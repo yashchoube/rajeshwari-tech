@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import { Mail, MapPin, Send, CheckCircle } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import SuccessToast from '@/components/SuccessToast';
 import { SITE_CONFIG } from '@/data/siteConfig';
 
 export default function ContactPage() {
@@ -19,6 +20,7 @@ export default function ContactPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -43,16 +45,20 @@ export default function ContactPage() {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to submit enquiry');
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to submit enquiry');
       }
 
       setIsSubmitting(false);
       setIsSuccess(true);
+      setShowToast(true);
       
-      // Reset form after 3 seconds
+      // Reset form after 5 seconds
       setTimeout(() => {
         setIsSuccess(false);
+        setShowToast(false);
         setFormData({
           name: '',
           email: '',
@@ -61,7 +67,7 @@ export default function ContactPage() {
           service: '',
           message: ''
         });
-      }, 3000);
+      }, 5000);
     } catch (error) {
       console.error('Error submitting enquiry:', error);
       setIsSubmitting(false);
@@ -109,11 +115,15 @@ export default function ContactPage() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-green-50 border border-green-200 rounded-lg p-6 text-center"
+                  className="bg-green-50 border-2 border-green-300 rounded-xl p-8 text-center shadow-lg"
                 >
-                  <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold text-green-800 mb-2">Message Sent Successfully!</h3>
+                  <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
+                  <h3 className="text-2xl font-bold text-green-800 mb-3">🎉 Message Sent Successfully!</h3>
+                  <p className="text-green-700 text-lg mb-4">Thank you for reaching out to us!</p>
                   <p className="text-green-600">We'll get back to you within 24 hours.</p>
+                  <div className="mt-4 text-sm text-green-500">
+                    This form will reset automatically in a few seconds...
+                  </div>
                 </motion.div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -146,9 +156,6 @@ export default function ContactPage() {
                         placeholder="your.email@company.com"
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Phone Number
@@ -159,9 +166,12 @@ export default function ContactPage() {
                         value={formData.phone}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                        placeholder="+91 98765 43210"
+                        placeholder="+1 (555) 123-4567"
                       />
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Company Name
@@ -223,7 +233,7 @@ export default function ContactPage() {
                     {isSubmitting ? (
                       <>
                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Sending...</span>
+                        <span>Sending Message...</span>
                       </>
                     ) : (
                       <>
@@ -252,16 +262,6 @@ export default function ContactPage() {
               </div>
 
               <div className="space-y-6">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-indigo-100 p-3 rounded-lg">
-                    <Phone className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Phone</h3>
-                    <p className="text-gray-600">{SITE_CONFIG.CONTACT.PHONE}</p>
-                    <p className="text-sm text-gray-500">Mon-Fri 9AM-6PM IST</p>
-                  </div>
-                </div>
 
                 <div className="flex items-start space-x-4">
                   <div className="bg-indigo-100 p-3 rounded-lg">
@@ -313,6 +313,13 @@ export default function ContactPage() {
       </section>
 
       <Footer />
+      
+      {/* Success Toast */}
+      <SuccessToast
+        isVisible={showToast}
+        message="Message sent successfully! We'll get back to you within 24 hours."
+        onClose={() => setShowToast(false)}
+      />
     </div>
   );
 }

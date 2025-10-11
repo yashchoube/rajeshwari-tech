@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllBlogs, createBlog, getAllBlogsAdmin } from '@/lib/database';
+import { getAllBlogs, createBlog, getAllBlogsAdmin } from '@/lib/neon-database';
 import { Validator } from '@/lib/validation';
 import { createResponse } from '@/lib/response';
 import { logger } from '@/lib/logger';
 import { AuthService } from '@/lib/auth';
+import { createSecureAPI, SECURITY_CONFIGS } from '@/lib/apiSecurity';
 
-export async function GET(request: NextRequest) {
+// Create secure API handler
+const secureAPI = createSecureAPI(SECURITY_CONFIGS.BLOG_API);
+
+export const GET = secureAPI(async function(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
     const scope = searchParams.get('scope');
     
     if (category) {
-      const { getBlogsByCategory } = await import('@/lib/database');
-      const blogs = getBlogsByCategory(category);
+      const { getBlogsByCategory } = await import('@/lib/neon-database');
+      const blogs = await getBlogsByCategory(category);
       return NextResponse.json({ blogs });
     }
     
@@ -31,19 +35,19 @@ export async function GET(request: NextRequest) {
       //     .build();
       // }
       
-      const blogs = getAllBlogsAdmin();
+      const blogs = await getAllBlogsAdmin();
       return NextResponse.json({ blogs });
     }
     
-    const blogs = getAllBlogs();
+    const blogs = await getAllBlogs();
     return NextResponse.json({ blogs });
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return NextResponse.json({ error: 'Failed to fetch blogs' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = secureAPI(async function(request: NextRequest) {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   try {
@@ -58,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response, { status: 400 });
     }
 
-    const blogId = createBlog({
+    const blogId = await createBlog({
       title: body.title.trim(),
       slug: body.slug?.trim() || undefined, // Auto-generate if not provided
       excerpt: body.excerpt.trim(),
@@ -85,4 +89,4 @@ export async function POST(request: NextRequest) {
     const response = createResponse().internalError('Failed to create blog');
     return NextResponse.json(response, { status: 500 });
   }
-}
+});

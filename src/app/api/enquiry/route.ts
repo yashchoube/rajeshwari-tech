@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createResponse } from '@/lib/response';
 import { logger } from '@/lib/logger';
+import { saveEnquiry } from '@/lib/neon-database';
+import { sendEnquiryNotification, sendWelcomeEmail } from '@/lib/emailService';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
     // Validate required fields
-    const requiredFields = ['name', 'email', 'phone', 'company', 'service'];
+    const requiredFields = ['name', 'email', 'service'];
     for (const field of requiredFields) {
       if (!body[field]) {
         const response = createResponse().error(`Missing required field: ${field}`);
@@ -15,34 +17,56 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Log the enquiry
-    logger.info('New enquiry received', {
-      service: body.service,
-      company: body.company,
-      participants: body.participants,
-      budget: body.budget,
-      email: body.email
-    });
-
-    // In a real application, you would save this to a database
-    // For now, we'll just log it and return success
+    // Save enquiry to database
     const enquiryData = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      ...body
+      name: body.name,
+      email: body.email,
+      phone: body.phone,
+      company: body.company,
+      service: body.service,
+      message: body.message
     };
 
-    // TODO: Save to database
-    // await saveEnquiryToDatabase(enquiryData);
+    const savedEnquiry = await saveEnquiry(enquiryData);
 
-    logger.info('Enquiry processed successfully', {
-      enquiryId: enquiryData.id,
-      service: body.service
+    // Send email notifications (non-blocking)
+    try {
+      // Send notification to your team
+      await sendEnquiryNotification({
+        ...enquiryData,
+        enquiryId: savedEnquiry.id
+      });
+
+      // Send welcome email to customer
+      await sendWelcomeEmail({
+        name: enquiryData.name,
+        email: enquiryData.email,
+        service: enquiryData.service
+      });
+
+      logger.info('Email notifications sent successfully', {
+        enquiryId: savedEnquiry.id,
+        customerEmail: enquiryData.email
+      });
+    } catch (emailError) {
+      // Don't fail the enquiry if email fails
+      logger.error('Email notification failed (enquiry still saved)', {
+        enquiryId: savedEnquiry.id,
+        error: emailError instanceof Error ? emailError.message : 'Unknown error'
+      });
+    }
+
+    // Log the enquiry
+    logger.info('New enquiry received and saved', {
+      enquiryId: savedEnquiry.id,
+      service: body.service,
+      company: body.company,
+      email: body.email
     });
 
     const response = createResponse().success({
       message: 'Enquiry submitted successfully',
-      enquiryId: enquiryData.id
+      enquiryId: savedEnquiry.id
     });
     return NextResponse.json(response);
 

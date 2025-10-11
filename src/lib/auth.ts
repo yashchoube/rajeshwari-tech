@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
-// Simple session-based authentication
-// In production, use proper authentication like NextAuth.js or Auth0
+// Simple session-based authentication system
+// Uses secure session IDs stored in memory
 
 interface AdminUser {
   id: string;
@@ -13,15 +13,45 @@ interface AdminUser {
   lastLogin: string;
 }
 
-// In production, store this in a secure database
+// Secure admin credentials from environment
 const ADMIN_CREDENTIALS = {
   username: process.env.ADMIN_USERNAME || 'admin',
   password: process.env.ADMIN_PASSWORD || 'admin123!',
   email: process.env.ADMIN_EMAIL || 'admin@rajeshwaritech.com'
 };
 
-// Session storage (in production, use Redis or database)
-const sessions = new Map<string, { user: AdminUser; expires: number }>();
+// Simple file-based session storage for development
+// In production, use Redis or database
+import fs from 'fs';
+import path from 'path';
+
+const SESSIONS_FILE = path.join(process.cwd(), 'sessions.json');
+
+// Load sessions from file
+const loadSessions = (): Map<string, { user: AdminUser; expiresAt: number }> => {
+  try {
+    if (fs.existsSync(SESSIONS_FILE)) {
+      const data = fs.readFileSync(SESSIONS_FILE, 'utf8');
+      const sessionsData = JSON.parse(data);
+      return new Map(Object.entries(sessionsData));
+    }
+  } catch (error) {
+    console.error('Error loading sessions:', error);
+  }
+  return new Map();
+};
+
+// Save sessions to file
+const saveSessions = (sessions: Map<string, { user: AdminUser; expiresAt: number }>) => {
+  try {
+    const sessionsData = Object.fromEntries(sessions);
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessionsData, null, 2));
+  } catch (error) {
+    console.error('Error saving sessions:', error);
+  }
+};
+
+let sessions = loadSessions();
 
 export class AuthService {
   static generateSessionId(): string {
@@ -29,43 +59,74 @@ export class AuthService {
   }
 
   static createSession(user: AdminUser): string {
+    // Generate secure session ID
     const sessionId = this.generateSessionId();
-    const expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+    const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
     
-    sessions.set(sessionId, { user, expires });
+    // Load current sessions
+    sessions = loadSessions();
     
-    // Clean up expired sessions
-    this.cleanupExpiredSessions();
+    // Store session
+    sessions.set(sessionId, { user, expiresAt });
     
+    // Save to file
+    saveSessions(sessions);
+    
+    console.log('AuthService.createSession - created session:', sessionId);
     return sessionId;
   }
 
   static getSession(sessionId: string): AdminUser | null {
-    const session = sessions.get(sessionId);
-    
-    if (!session) {
+    try {
+      console.log('AuthService.getSession - sessionId length:', sessionId.length);
+      
+      // Load current sessions
+      sessions = loadSessions();
+      
+      const session = sessions.get(sessionId);
+      if (!session) {
+        console.log('AuthService.getSession - session not found');
+        return null;
+      }
+      
+      // Check if session has expired
+      if (Date.now() > session.expiresAt) {
+        console.log('AuthService.getSession - session expired');
+        sessions.delete(sessionId);
+        saveSessions(sessions);
+        return null;
+      }
+      
+      console.log('AuthService.getSession - session found and valid');
+      return session.user;
+    } catch (error) {
+      console.error('Session verification failed:', error);
       return null;
     }
-    
-    if (Date.now() > session.expires) {
-      sessions.delete(sessionId);
-      return null;
-    }
-    
-    return session.user;
   }
 
   static destroySession(sessionId: string): void {
+    // Load current sessions
+    sessions = loadSessions();
+    
+    // Remove session
     sessions.delete(sessionId);
+    
+    // Save to file
+    saveSessions(sessions);
+    
+    console.log('AuthService.destroySession - session removed');
   }
 
   static cleanupExpiredSessions(): void {
+    // Clean up expired sessions
     const now = Date.now();
     for (const [sessionId, session] of sessions.entries()) {
-      if (now > session.expires) {
+      if (now > session.expiresAt) {
         sessions.delete(sessionId);
       }
     }
+    console.log('AuthService.cleanupExpiredSessions - cleaned up expired sessions');
   }
 
   static validateCredentials(username: string, password: string): boolean {
@@ -75,14 +136,19 @@ export class AuthService {
 
   static async getCurrentUser(request: NextRequest): Promise<AdminUser | null> {
     try {
-      const cookieStore = await cookies();
-      const sessionId = cookieStore.get('admin-session')?.value;
+      // Get session ID from request cookies
+      const sessionId = request.cookies.get('admin-session')?.value;
+      
+      console.log('AuthService.getCurrentUser - sessionId:', sessionId);
       
       if (!sessionId) {
+        console.log('AuthService.getCurrentUser - no session ID found');
         return null;
       }
       
-      return this.getSession(sessionId);
+      const user = this.getSession(sessionId);
+      console.log('AuthService.getCurrentUser - user found:', user ? 'yes' : 'no');
+      return user;
     } catch (error) {
       console.error('Error getting current user:', error);
       return null;

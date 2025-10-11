@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
-import { getBlogBySlug, getBlogCategories } from '@/lib/database';
+import { getBlogBySlug, getBlogCategories } from '@/lib/neon-database';
 import { Calendar, User, Eye, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import BlogActions from '@/components/BlogActions';
@@ -31,7 +31,7 @@ export async function generateMetadata({ params, searchParams }: BlogPageProps):
   const { slug } = await params;
   const sp = (await (searchParams || Promise.resolve({}))) as Record<string, any>;
   const preview = sp?.preview === 'true';
-  const blog = (preview ? (await import('@/lib/database')).getBlogBySlugAdmin(slug) : getBlogBySlug(slug)) as
+  const blog = await (preview ? (await import('@/lib/neon-database')).getBlogBySlugAdmin(slug) : getBlogBySlug(slug)) as
     | BlogRecord
     | undefined;
   
@@ -51,10 +51,10 @@ export default async function BlogPage({ params, searchParams }: BlogPageProps) 
   const { slug } = await params;
   const sp = (await (searchParams || Promise.resolve({}))) as Record<string, any>;
   const preview = sp?.preview === 'true';
-  const blog = (preview ? (await import('@/lib/database')).getBlogBySlugAdmin(slug) : getBlogBySlug(slug)) as
+  const blog = await (preview ? (await import('@/lib/neon-database')).getBlogBySlugAdmin(slug) : getBlogBySlug(slug)) as
     | BlogRecord
     | undefined;
-  const categories = getBlogCategories();
+  const categories = await getBlogCategories();
 
   if (!blog) {
     notFound();
@@ -188,7 +188,7 @@ export default async function BlogPage({ params, searchParams }: BlogPageProps) 
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            {categories.slice(0, 3).map((category: any, index: number) => (
+            {(await categories).slice(0, 3).map((category: any, index: number) => (
               <div key={category.category} className="bg-gray-50 rounded-2xl p-6 hover:shadow-lg transition-shadow">
                 <h3 className="text-xl font-bold text-gray-900 mb-3">{category.category}</h3>
                 <p className="text-gray-600 mb-4">

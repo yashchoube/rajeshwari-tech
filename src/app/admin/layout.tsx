@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LogOut, Shield, Users, FileText, BarChart3, Settings } from 'lucide-react';
+import { LogOut, Shield, Users, FileText, BarChart3, Settings, MessageSquare } from 'lucide-react';
 
 interface AdminUser {
   id: string;
@@ -46,16 +46,14 @@ export default function AdminLayout({
         const data = await response.json();
         setUser(data.data.user);
       } else {
-        // Only redirect if not already on login page
-        if (pathname !== '/admin/login') {
-          router.push('/admin/login');
-        }
-      }
-    } catch (error) {
-      // Only redirect if not already on login page
-      if (pathname !== '/admin/login') {
+        // User is not authenticated, redirect to login
+        console.log('User not authenticated, redirecting to login');
         router.push('/admin/login');
       }
+    } catch (error) {
+      // Error occurred, redirect to login
+      console.log('Auth check failed, redirecting to login:', error);
+      router.push('/admin/login');
     } finally {
       setLoading(false);
     }
@@ -87,11 +85,19 @@ export default function AdminLayout({
   }
 
   if (!user) {
-    return null; // Will redirect to login
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: BarChart3, current: pathname === '/admin' },
+    { name: 'Enquiries', href: '/admin/enquiries', icon: MessageSquare, current: pathname === '/admin/enquiries' },
     { name: 'Blogs', href: '/admin/blogs', icon: FileText, current: pathname === '/admin/blogs' },
     { name: 'Users', href: '/admin/users', icon: Users, current: pathname === '/admin/users' },
     { name: 'Settings', href: '/admin/settings', icon: Settings, current: pathname === '/admin/settings' },

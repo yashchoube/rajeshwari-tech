@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllDemoBookings } from '@/lib/database';
-import { AuthService } from '@/lib/auth';
+import { getAllDemoBookings } from '@/lib/neon-database';
+import { createSecureAPI, SECURITY_CONFIGS } from '@/lib/apiSecurity';
 
-export async function GET(request: NextRequest) {
+// Create secure API handler for admin only
+const secureAPI = createSecureAPI(SECURITY_CONFIGS.ADMIN_ONLY);
+
+export const GET = secureAPI(async function(request: NextRequest) {
   try {
-    // Temporarily bypass authentication for testing
-    // TODO: Re-enable authentication once session issue is resolved
-    // await AuthService.requireAdmin(request);
-    
-    const demoBookings = getAllDemoBookings();
+    const demoBookings = await getAllDemoBookings();
     
     return NextResponse.json({
       success: true,
@@ -22,4 +21,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

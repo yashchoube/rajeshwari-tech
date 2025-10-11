@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateEnrollmentStatus } from '@/lib/database';
+import { updateEnrollmentStatus } from '@/lib/neon-database';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    updateEnrollmentStatus(id, status);
+    await updateEnrollmentStatus(id, status);
     
     return NextResponse.json({ 
       success: true, 

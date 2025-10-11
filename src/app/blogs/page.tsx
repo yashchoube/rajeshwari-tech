@@ -4,17 +4,23 @@ import Footer from '@/components/Footer';
 import BlogCard from '@/components/BlogCard';
 import NewsletterSubscription from '@/components/NewsletterSubscription';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
-import { getAllBlogs, getFeaturedBlogs, getBlogCategories } from '@/lib/database';
-
 export const metadata: Metadata = {
   title: 'Blog - RajeshwariTech | Latest Articles & Tech Insights',
   description: 'Read our latest articles on programming, technology, career tips, and industry insights. Stay updated with the tech world.',
 };
 
-export default function BlogsPage() {
-  const blogs = getAllBlogs();
-  const featuredBlogs = getFeaturedBlogs();
-  const categories = getBlogCategories();
+export default async function BlogsPage() {
+  // Fetch blogs from API
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.rajeshwaritech.com';
+  const blogsResponse = await fetch(`${baseUrl}/api/blogs`, { cache: 'no-store' });
+  const blogsData = await blogsResponse.json();
+  const blogs = blogsData.blogs || [];
+  
+  // Filter featured blogs
+  const featuredBlogs = blogs.filter((blog: any) => blog.featured);
+  
+  // Get unique categories
+  const categories = [...new Set(blogs.map((blog: any) => blog.category))];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -66,7 +72,7 @@ export default function BlogsPage() {
             </div>
             
             <div className="grid lg:grid-cols-3 gap-8">
-              {featuredBlogs.map((blog, index) => (
+              {featuredBlogs.map((blog: any, index: number) => (
                 <BlogCard key={blog.id} blog={blog} index={index} />
               ))}
             </div>
@@ -117,7 +123,7 @@ export default function BlogsPage() {
               
               {blogs.length > 0 ? (
                 <div className="grid md:grid-cols-2 gap-8">
-                  {blogs.map((blog, index) => (
+                  {blogs.map((blog: any, index: number) => (
                     <BlogCard key={blog.id} blog={blog} index={index} />
                   ))}
                 </div>

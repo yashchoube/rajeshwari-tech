@@ -40,6 +40,73 @@ export const SITE_CONFIG = {
     CONTENT_PREVIEW_LENGTH: 300
   },
 
+  // About Page Data
+  ABOUT: {
+    COMPANY_NAME: 'RajeshwariTech',
+    FOUNDED_YEAR: '2019',
+    MISSION: 'To democratize technology education by providing accessible, practical, and industry-relevant training that empowers individuals to build successful careers in technology.',
+    VISION: 'To become the leading technology education provider that shapes the future of tech talent, creating a world where anyone can learn, grow, and succeed in technology careers.',
+    
+    STATS: {
+      STUDENTS_TRAINED: '5000+',
+      PLACEMENT_SUCCESS: '95%',
+      YEARS_EXPERIENCE: '10+',
+      EXPERT_INSTRUCTORS: '50+'
+    },
+
+    VALUES: [
+      {
+        icon: 'Heart',
+        title: 'Student-Centric Approach',
+        description: 'We put our students at the center of everything we do, ensuring their success is our primary goal.'
+      },
+      {
+        icon: 'Lightbulb',
+        title: 'Innovation in Education',
+        description: 'We continuously evolve our teaching methods and curriculum to stay ahead of industry trends.'
+      },
+      {
+        icon: 'Globe',
+        title: 'Global Perspective',
+        description: 'Our programs prepare students for international opportunities and global tech markets.'
+      },
+      {
+        icon: 'TrendingUp',
+        title: 'Career Growth',
+        description: 'We focus on long-term career development, not just immediate job placement.'
+      }
+    ],
+
+
+    TIMELINE: [
+      {
+        year: '2019',
+        title: 'Started Teaching Journey',
+        description: 'Began our mission to bridge the gap between academic learning and industry requirements through practical, hands-on training.'
+      },
+      {
+        year: '2021',
+        title: '1000+ Students Trained',
+        description: 'Reached our first major milestone of training over 1000 students across various programs.'
+      },
+      {
+        year: '2023',
+        title: '5000+ Alumni Network',
+        description: 'Built a strong alumni network with graduates working at top tech companies worldwide.'
+      },
+      {
+        year: '2024',
+        title: 'Industry Partnerships',
+        description: 'Established partnerships with leading tech companies for direct placement opportunities.'
+      },
+      {
+        year: '2025',
+        title: 'Website Launch',
+        description: 'Launched our comprehensive online platform to reach and serve students globally with our proven teaching methodology.'
+      }
+    ]
+  },
+
   // UI Constants
   UI: {
     ANIMATION_DURATION: 0.3,
@@ -50,9 +117,8 @@ export const SITE_CONFIG = {
 
   // Contact information
   CONTACT: {
-    PHONE: '+91 9876543210',
-    EMAIL: 'info@rajeshwaritech.com',
-    ADDRESS: '123 Tech Street, Bangalore, India'
+    EMAIL: 'rajeshwaritechservice@gmail.com',
+    ADDRESS: 'Working remotely from Bangalore, India'
   },
 
   // Social media

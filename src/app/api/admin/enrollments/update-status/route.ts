@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
-import { updateEnrollmentStatus } from '@/lib/database';
+import { updateEnrollmentStatus } from '@/lib/neon-database';
+import { createSecureAPI, SECURITY_CONFIGS } from '@/lib/apiSecurity';
 
-export async function PUT(request: NextRequest) {
+// Create secure API handler for admin only
+const secureAPI = createSecureAPI(SECURITY_CONFIGS.ADMIN_ONLY);
+
+export const PUT = secureAPI(async function(request: NextRequest) {
   try {
-    // Temporarily bypass authentication for testing
-    // TODO: Re-enable authentication once session issue is resolved
-    // const authResult = await AuthService.validateSession(request);
-    // if (!authResult.success) {
-    //   return NextResponse.json(
-    //     { error: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
-
     const { id, status } = await request.json();
 
     if (!id || !status) {
@@ -32,7 +25,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const result = updateEnrollmentStatus(id, status);
+    const result = await updateEnrollmentStatus(id, status);
     
     if (!result.success) {
       return NextResponse.json(
@@ -54,4 +47,4 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
