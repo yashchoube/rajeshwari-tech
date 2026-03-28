@@ -1,0 +1,267 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Menu, X, ChevronDown, Play } from 'lucide-react';
+import CourseSelectionModal from './CourseSelectionModal';
+
+const Header = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+  const pathname = usePathname();
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const shouldShowEnrollButton = pathname !== '/courses';
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleDropdownEnter = (dropdownName: string) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+    setActiveDropdown(dropdownName);
+  };
+
+  const handleDropdownLeave = () => {
+    hoverTimeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+    }, 150);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('[data-dropdown]')) {
+        setActiveDropdown(null);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
+  const courses = [
+    { name: 'Core Java + Competitive Programming', href: '/courses/core-java-advanced' },
+    { name: 'Python Full Stack', href: '/courses/python-fullstack' },
+    { name: 'Rust Programming', href: '/courses/rust-programming' },
+    { name: 'Data Structures & Algorithms', href: '/courses/data-structures-algorithms' },
+    { name: 'Full Stack SDET (Testing) - Java', href: '/courses/sdet-java' },
+    { name: 'Full Stack SDET (Testing) - Python', href: '/courses/sdet-python' },
+    { name: 'Full Stack SDET (Testing) - JavaScript', href: '/courses/sdet-javascript' },
+    { name: 'Backend Development - Java', href: '/courses/backend-java' },
+    { name: 'Frontend - ReactJS', href: '/courses/frontend-react' },
+    { name: 'Pre-Campus Placement', href: '/courses/placement-prep' },
+    { name: 'DevOps Mastery', href: '/courses/devops-mastery' },
+  ];
+
+  const services = [
+    { name: 'Corporate Trainings', href: '/services/corporate' },
+    { name: 'Freelance Development', href: '/services/freelance' },
+    { name: 'Project Development', href: '/services/project' },
+    { name: 'Interview Preparation', href: '/services/interview' },
+    { name: 'IT Consulting', href: '/services/consulting' },
+    { name: '1-on-1 Mentorship', href: '/services/mentorship' },
+  ];
+
+  return (
+    <header className="fixed top-0 w-full bg-white/95 backdrop-blur-md z-50 shadow-sm border-b border-indigo-50">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <Link href="/" className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-cyan-400 rounded-lg flex items-center justify-center shadow-indigo-200 shadow-lg">
+              <span className="text-white font-bold text-lg">🚀</span>
+            </div>
+            <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-cyan-400 bg-clip-text text-transparent">
+              RajeshwariTech
+            </span>
+          </Link>
+
+          <div className="hidden md:flex items-center space-x-8">
+            <Link href="/" className="text-indigo-900 hover:text-indigo-600 font-bold transition-colors">
+              Home
+            </Link>
+            
+            <div 
+              className="relative"
+              data-dropdown="courses"
+              onMouseEnter={() => handleDropdownEnter('courses')}
+              onMouseLeave={handleDropdownLeave}
+            >
+              <button className="flex items-center space-x-1 text-indigo-900 hover:text-indigo-600 font-bold transition-colors">
+                <span>Courses</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === 'courses' ? 'rotate-180' : ''}`} />
+              </button>
+              {activeDropdown === 'courses' && (
+                <div 
+                  className="absolute top-full left-0 mt-2 w-80 bg-white rounded-xl shadow-2xl shadow-indigo-100 border border-indigo-50 py-2 z-50 overflow-hidden"
+                  onMouseEnter={() => handleDropdownEnter('courses')}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <div className="grid grid-cols-1 gap-1">
+                    {courses.map((course) => (
+                      <Link
+                        key={course.name}
+                        href={course.href}
+                        className="px-4 py-3 text-sm text-indigo-800 hover:bg-indigo-50 hover:text-indigo-600 transition-colors block font-medium"
+                      >
+                        {course.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div 
+              className="relative"
+              data-dropdown="services"
+              onMouseEnter={() => handleDropdownEnter('services')}
+              onMouseLeave={handleDropdownLeave}
+            >
+              <button className="flex items-center space-x-1 text-indigo-900 hover:text-indigo-600 font-bold transition-colors">
+                <span>Services</span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === 'services' ? 'rotate-180' : ''}`} />
+              </button>
+              {activeDropdown === 'services' && (
+                <div 
+                  className="absolute top-full left-0 mt-2 w-64 bg-white rounded-xl shadow-2xl shadow-indigo-100 border border-indigo-50 py-2 z-50 overflow-hidden"
+                  onMouseEnter={() => handleDropdownEnter('services')}
+                  onMouseLeave={handleDropdownLeave}
+                >
+                  <div className="grid grid-cols-1 gap-1">
+                    {services.map((service) => (
+                      <Link
+                        key={service.name}
+                        href={service.href}
+                        className="px-4 py-3 text-sm text-indigo-800 hover:bg-indigo-50 hover:text-indigo-600 transition-colors block font-medium"
+                      >
+                        {service.name}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Link href="/blogs" className="text-indigo-900 hover:text-indigo-600 font-bold transition-colors">
+              Blog
+            </Link>
+            <Link href="/about" className="text-indigo-900 hover:text-indigo-600 font-bold transition-colors">
+              About
+            </Link>
+            <Link href="/contact" className="text-indigo-900 hover:text-indigo-600 font-bold transition-colors">
+              Contact
+            </Link>
+            {shouldShowEnrollButton && (
+              <button 
+                onClick={() => setIsCourseModalOpen(true)}
+                className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-full font-bold hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 shadow-lg shadow-indigo-100 hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+              >
+                <Play className="w-4 h-4" />
+                <span>Enroll Now</span>
+              </button>
+            )}
+          </div>
+
+          <div className="md:hidden">
+            <button
+              onClick={() => {
+                setIsMenuOpen(!isMenuOpen);
+                setActiveDropdown(null);
+              }}
+              className="text-indigo-900 hover:text-indigo-600 transition-colors"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+        </div>
+
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-indigo-50 bg-white">
+            <div className="px-2 pt-2 pb-3 space-y-1">
+              <Link href="/" className="block px-3 py-2 text-indigo-900 hover:text-indigo-600 font-bold">
+                Home
+              </Link>
+              <div className="px-3 py-2">
+                <div className="text-indigo-900 font-bold mb-2 uppercase text-xs tracking-widest">Courses</div>
+                <div className="ml-4 space-y-1">
+                  {courses.slice(0, 6).map((course) => (
+                    <Link
+                      key={course.name}
+                      href={course.href}
+                      className="block px-3 py-2 text-sm text-indigo-700 hover:text-indigo-600 font-medium"
+                    >
+                      {course.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <div className="px-3 py-2">
+                <div className="text-indigo-900 font-bold mb-2 uppercase text-xs tracking-widest">Services</div>
+                <div className="ml-4 space-y-1">
+                  {services.slice(0, 4).map((service) => (
+                    <Link
+                      key={service.name}
+                      href={service.href}
+                      className="block px-3 py-2 text-sm text-indigo-700 hover:text-indigo-600 font-medium"
+                    >
+                      {service.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              <Link href="/blogs" className="block px-3 py-2 text-indigo-900 hover:text-indigo-600 font-bold">
+                Blog
+              </Link>
+              <Link href="/about" className="block px-3 py-2 text-indigo-900 hover:text-indigo-600 font-bold">
+                About
+              </Link>
+              <Link href="/contact" className="block px-3 py-2 text-indigo-900 hover:text-indigo-600 font-bold">
+                Contact
+              </Link>
+              {shouldShowEnrollButton && (
+                <button 
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsCourseModalOpen(true);
+                  }}
+                  className="block mx-3 mt-4 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white px-6 py-3 rounded-full font-bold text-center w-full flex items-center justify-center space-x-2 shadow-lg shadow-indigo-100"
+                >
+                  <Play className="w-4 h-4" />
+                  <span>Enroll Now</span>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </nav>
+
+      <CourseSelectionModal 
+        isOpen={isCourseModalOpen} 
+        onClose={() => setIsCourseModalOpen(false)} 
+      />
+    </header>
+  );
+};
+
+export default Header;

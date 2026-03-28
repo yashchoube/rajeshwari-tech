@@ -1,0 +1,147 @@
+{
+  "summary": {
+    "total": 14,
+    "passed": 14,
+    "failed": 0,
+    "warnings": 0,
+    "successRate": "100.00"
+  },
+  "tests": [
+    {
+      "name": "Admin Login",
+      "status": "success",
+      "message": "Logged in successfully",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:02.500Z"
+    },
+    {
+      "name": "Blog Creation",
+      "status": "success",
+      "message": "Blog created successfully",
+      "data": {
+        "success": true,
+        "meta": {
+          "timestamp": "2026-03-20T12:55:02.905Z",
+          "requestId": "req_1774011302905_q9sirk9fx",
+          "version": "1.0.0"
+        },
+        "data": {
+          "blogId": 34
+        },
+        "message": "Blog submitted for approval successfully"
+      },
+      "timestamp": "2026-03-20T12:55:02.909Z"
+    },
+    {
+      "name": "Blog Retrieval",
+      "status": "success",
+      "message": "Retrieved 16 blogs",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:03.081Z"
+    },
+    {
+      "name": "Admin Blog Retrieval",
+      "status": "success",
+      "message": "Retrieved 23 admin blogs",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:03.528Z"
+    },
+    {
+      "name": "Course Enrollment",
+      "status": "success",
+      "message": "Course enrollment successful",
+      "data": {
+        "success": true,
+        "data": {
+          "enrollmentId": 16
+        },
+        "message": "Enrollment submitted successfully"
+      },
+      "timestamp": "2026-03-20T12:55:03.610Z"
+    },
+    {
+      "name": "Enquiry Submission",
+      "status": "success",
+      "message": "Enquiry submitted successfully",
+      "data": {
+        "success": true,
+        "meta": {
+          "timestamp": "2026-03-20T12:55:06.103Z",
+          "requestId": "req_1774011306103_ctloxve0k",
+          "version": "1.0.0"
+        },
+        "data": {
+          "message": "Enquiry submitted successfully",
+          "enquiryId": 11
+        }
+      },
+      "timestamp": "2026-03-20T12:55:06.111Z"
+    },
+    {
+      "name": "Analytics Tracking",
+      "status": "success",
+      "message": "Analytics tracking successful",
+      "data": {
+        "success": true,
+        "message": "Page visit tracked"
+      },
+      "timestamp": "2026-03-20T12:55:06.374Z"
+    },
+    {
+      "name": "Newsletter Subscription",
+      "status": "success",
+      "message": "Newsletter subscription successful",
+      "data": {
+        "success": true,
+        "data": {
+          "subscriptionId": 12
+        },
+        "message": "Successfully subscribed to newsletter!"
+      },
+      "timestamp": "2026-03-20T12:55:06.493Z"
+    },
+    {
+      "name": "Newsletter Subscribers Retrieval",
+      "status": "success",
+      "message": "Retrieved 5 newsletter subscriptions",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:06.836Z"
+    },
+    {
+      "name": "Invalid Blog Data Handling",
+      "status": "success",
+      "message": "Correctly rejected invalid blog data",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:06.877Z"
+    },
+    {
+      "name": "Invalid Enrollment Data Handling",
+      "status": "success",
+      "message": "Correctly rejected invalid enrollment data",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:07.061Z"
+    },
+    {
+      "name": "404 Error Handling",
+      "status": "success",
+      "message": "Correctly returned 404 for non-existent endpoint",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:07.607Z"
+    },
+    {
+      "name": "Database File Exists",
+      "status": "success",
+      "message": "Database file found at /home/zanyxizion/Desktop/project/rajeshwari-tech-main-1/data/rajeshwari-tech.db",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:07.607Z"
+    },
+    {
+      "name": "Database File Size",
+      "status": "success",
+      "message": "Database file size: 270336 bytes",
+      "data": null,
+      "timestamp": "2026-03-20T12:55:07.608Z"
+    }
+  ],
+  "timestamp": "2026-03-20T12:55:07.608Z"
+}

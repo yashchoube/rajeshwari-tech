@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        .image-preview { max-width: 200px; margin: 10px 0; border-radius: 8px; }
+        .test-editor { 
+            border: 1px solid #ddd; 
+            min-height: 200px; 
+            padding: 10px; 
+            margin: 10px 0;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Upload Comprehensive Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: API Response Format</h2>
+        <button class="btn btn-primary" onclick="testApiResponse()">Test API Response</button>
+        <div id="apiResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Image Upload with Preview</h2>
+        <input type="file" id="imageInput" accept="image/*" onchange="testImageUpload()" />
+        <div id="uploadResult" class="result" style="display: none;"></div>
+        <div id="imagePreview"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Rich Text Editor Simulation</h2>
+        <div class="test-editor" contenteditable="true" id="testEditor">
+            <p>Click "Upload Image" below to test the editor functionality:</p>
+        </div>
+        <button class="btn btn-success" onclick="simulateEditorUpload()">Upload Image to Editor</button>
+        <div id="editorResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Image Controls Test</h2>
+        <div id="imageControlsTest" class="test-editor">
+            <p>Upload an image to test controls:</p>
+        </div>
+        <input type="file" id="controlsInput" accept="image/*" onchange="testImageControls()" />
+        <div id="controlsResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Error Handling</h2>
+        <button class="btn btn-danger" onclick="testErrorHandling()">Test Error Scenarios</button>
+        <div id="errorResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testApiResponse() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing API...';
+            
+            try {
+                // Create a test file
+                const canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 100;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(0, 0, 100, 100);
+                
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('image', blob, 'test.png');
+                    
+                    const response = await fetch('http://localhost:3001/api/upload/image', {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        resultDiv.className = 'result success';
+                        resultDiv.innerHTML = `
+                            <strong>✅ API Test Passed!</strong><br>
+                            <strong>Response:</strong> ${JSON.stringify(data, null, 2)}<br>
+                            <strong>Image URL:</strong> <a href="http://localhost:3001${data.url}" target="_blank">${data.url}</a>
+                        `;
+                    } else {
+                        resultDiv.className = 'result error';
+                        resultDiv.innerHTML = `
+                            <strong>❌ API Test Failed!</strong><br>
+                            Status: ${response.status}<br>
+                            Response: ${JSON.stringify(data, null, 2)}
+                        `;
+                    }
+                }, 'image/png');
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Network Error:</strong> ${error.message}`;
+            }
+        }
+
+        async function testImageUpload() {
+            const fileInput = document.getElementById('imageInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('uploadResult');
+            const previewDiv = document.getElementById('imagePreview');
+            
+            if (!file) return;
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Uploading image...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('http://localhost:3001/api/upload/image', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Upload Successful!</strong><br>
+                        <strong>Filename:</strong> ${data.filename}<br>
+                        <strong>Size:</strong> ${(data.size / 1024).toFixed(2)} KB<br>
+                        <strong>Dimensions:</strong> ${data.dimensions.width} × ${data.dimensions.height}<br>
+                        <strong>URL:</strong> <a href="http://localhost:3001${data.url}" target="_blank">${data.url}</a>
+                    `;
+                    
+                    previewDiv.innerHTML = `
+                        <img src="http://localhost:3001${data.url}" alt="Uploaded image" class="image-preview" />
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <strong>❌ Upload Failed!</strong><br>
+                        Error: ${data.error || 'Unknown error'}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Upload Error:</strong> ${error.message}`;
+            }
+        }
+
+        async function simulateEditorUpload() {
+            const editor = document.getElementById('testEditor');
+            const resultDiv = document.getElementById('editorResult');
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Simulating editor upload...';
+            
+            try {
+                // Create a test image
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 150;
+                const ctx = canvas.getContext('2d');
+                
+                // Create a gradient background
+                const gradient = ctx.createLinearGradient(0, 0, 200, 150);
+                gradient.addColorStop(0, '#ff6b6b');
+                gradient.addColorStop(1, '#4ecdc4');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 200, 150);
+                
+                // Add text
+                ctx.fillStyle = 'white';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Test Image', 100, 80);
+                
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('image', blob, 'editor-test.png');
+                    
+                    const response = await fetch('http://localhost:3001/api/upload/image', {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        // Simulate the rich text editor HTML insertion
+                        const imgHtml = `
+                            <div class="image-container" style="
+                                text-align: center; 
+                                margin: 20px 0; 
+                                position: relative; 
+                                display: block; 
+                                width: 100%;
+                                border: 1px solid #e5e7eb;
+                                border-radius: 12px;
+                                padding: 16px;
+                                background: #fafafa;
+                            ">
+                                <div class="image-wrapper" style="
+                                    position: relative;
+                                    display: inline-block;
+                                    max-width: 100%;
+                                    border-radius: 8px;
+                                    overflow: hidden;
+                                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                                ">
+                                    <img 
+                                        src="http://localhost:3001${data.url}" 
+                                        alt="Uploaded image" 
+                                        style="
+                                            max-width: 100%; 
+                                            height: auto; 
+                                            display: block;
+                                            cursor: move;
+                                            transition: transform 0.2s ease;
+                                        "
+                                        draggable="true"
+                                    />
+                                </div>
+                                <div class="image-info" style="
+                                    margin-top: 8px;
+                                    font-size: 12px;
+                                    color: #6b7280;
+                                    text-align: center;
+                                ">
+                                    ✅ Image uploaded successfully • Drag to move • Hover for controls
+                                </div>
+                            </div>
+                        `;
+                        
+                        editor.innerHTML += imgHtml;
+                        
+                        resultDiv.className = 'result success';
+                        resultDiv.innerHTML = `
+                            <strong>✅ Editor Upload Successful!</strong><br>
+                            Image has been inserted into the editor with proper styling and controls.
+                        `;
+                    } else {
+                        resultDiv.className = 'result error';
+                        resultDiv.innerHTML = `<strong>❌ Editor Upload Failed!</strong><br>Error: ${data.error}`;
+                    }
+                }, 'image/png');
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Editor Error:</strong> ${error.message}`;
+            }
+        }
+
+        async function testImageControls() {
+            const fileInput = document.getElementById('controlsInput');
+            const file = fileInput.files[0];
+            const testDiv = document.getElementById('imageControlsTest');
+            const resultDiv = document.getElementById('controlsResult');
+            
+            if (!file) return;
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing image controls...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('http://localhost:3001/api/upload/image', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    const imgHtml = `
+                        <div class="image-container" style="
+                            text-align: center; 
+                            margin: 20px 0; 
+                            position: relative; 
+                            display: block; 
+                            width: 100%;
+                            border: 1px solid #e5e7eb;
+                            border-radius: 12px;
+                            padding: 16px;
+                            background: #fafafa;
+                        ">
+                            <div class="image-wrapper" style="
+                                position: relative;
+                                display: inline-block;
+                                max-width: 100%;
+                                border-radius: 8px;
+                                overflow: hidden;
+                                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                            ">
+                                <img 
+                                    src="http://localhost:3001${data.url}" 
+                                    alt="Uploaded image" 
+                                    id="testImage"
+                                    style="
+                                        max-width: 100%; 
+                                        height: auto; 
+                                        display: block;
+                                        cursor: move;
+                                        transition: transform 0.2s ease;
+                                    "
+                                    draggable="true"
+                                />
+                                
+                                <div class="image-controls" style="
+                                    position: absolute;
+                                    top: 8px;
+                                    right: 8px;
+                                    display: flex;
+                                    gap: 4px;
+                                ">
+                                    <button onclick="
+                                        const img = document.getElementById('testImage');
+                                        const currentWidth = img.offsetWidth;
+                                        img.style.width = (currentWidth * 1.1) + 'px';
+                                    " style="
+                                        background: rgba(0,0,0,0.7);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        padding: 4px 8px;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                    ">+</button>
+                                    <button onclick="
+                                        const img = document.getElementById('testImage');
+                                        const currentWidth = img.offsetWidth;
+                                        img.style.width = Math.max(100, currentWidth * 0.9) + 'px';
+                                    " style="
+                                        background: rgba(0,0,0,0.7);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        padding: 4px 8px;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                    ">-</button>
+                                    <button onclick="
+                                        const img = document.getElementById('testImage');
+                                        const currentRotation = img.style.transform.includes('rotate') ? 
+                                            parseInt(img.style.transform.match(/rotate\\((-?\\d+)deg\\)/)?.[1] || '0') : 0;
+                                        img.style.transform = \`rotate(\${currentRotation + 90}deg)\`;
+                                    " style="
+                                        background: rgba(0,0,0,0.7);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        padding: 4px 8px;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                    ">↻</button>
+                                    <button onclick="
+                                        if(confirm('Delete this image?')) {
+                                            this.closest('.image-container').remove();
+                                        }
+                                    " style="
+                                        background: rgba(220,38,38,0.8);
+                                        color: white;
+                                        border: none;
+                                        border-radius: 4px;
+                                        padding: 4px 8px;
+                                        font-size: 12px;
+                                        cursor: pointer;
+                                    ">×</button>
+                                </div>
+                            </div>
+                            <div class="image-info" style="
+                                margin-top: 8px;
+                                font-size: 12px;
+                                color: #6b7280;
+                                text-align: center;
+                            ">
+                                ✅ Image with controls • Try the +, -, ↻, × buttons
+                            </div>
+                        </div>
+                    `;
+                    
+                    testDiv.innerHTML = imgHtml;
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Image Controls Test Successful!</strong><br>
+                        Image uploaded with interactive controls. Try the buttons to resize, rotate, or delete the image.
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<strong>❌ Controls Test Failed!</strong><br>Error: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Controls Error:</strong> ${error.message}`;
+            }
+        }
+
+        function testErrorHandling() {
+            const resultDiv = document.getElementById('errorResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = `
+                <strong>🔍 Error Handling Tests:</strong><br>
+                <strong>1. File Type Validation:</strong> Try uploading a non-image file<br>
+                <strong>2. File Size Validation:</strong> Try uploading a very large image (>5MB)<br>
+                <strong>3. Network Error:</strong> Disconnect internet and try uploading<br>
+                <strong>4. Server Error:</strong> Check server logs for any issues<br><br>
+                <strong>Expected Behavior:</strong><br>
+                • Non-image files should show "Please select an image file"<br>
+                • Large files should show "File too large" error<br>
+                • Network errors should show "Failed to upload image"<br>
+                • All errors should be handled gracefully with user feedback
+            `;
+        }
+    </script>
+</body>
+</html>

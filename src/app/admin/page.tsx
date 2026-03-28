@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions, getAnalyticsData, getReferrerData, getAllBlogs, getAllBlogsAdmin, getEnquiries, getPopularCategories } from '@/lib/database';
+import { getAllDemoBookings, getAllEnrollments, getAllNewsletterSubscriptions, getAnalyticsData, getReferrerData, getAllBlogs, getAllBlogsAdmin, getEnquiries, getPopularCategories, getDashboardTrends, getAnalyticsHistoryNew } from '@/lib/database';
 import DashboardStats from '@/components/admin/DashboardStats';
 import AnalyticsChart from '@/components/admin/AnalyticsChart';
 import RecentActivity from '@/components/admin/RecentActivity';
@@ -113,9 +113,12 @@ async function AdminDashboard() {
   let blogs: Blog[] = [];
   let allBlogs: Blog[] = [];
   let popularCategories: CategoryData[] = [];
+  let trends: any = null;
+  let analyticsHistory: any[] = [];
 
   try {
     // Fetch all data from Neon database
+    const { getDashboardTrends } = await import('@/lib/database');
     demoBookings = (await getAllDemoBookings()) as DemoBooking[];
     enrollments = (await getAllEnrollments()) as Enrollment[];
     enquiries = (await getEnquiries()) as Enquiry[];
@@ -125,6 +128,8 @@ async function AdminDashboard() {
     blogs = (await getAllBlogs()) as Blog[];
     allBlogs = (await getAllBlogsAdmin()) as Blog[];
     popularCategories = await getPopularCategories();
+    trends = await getDashboardTrends();
+    analyticsHistory = await getAnalyticsHistoryNew(7);
   } catch (error) {
     console.error('Error fetching admin data:', error);
     // Reset to empty arrays if database fails
@@ -137,6 +142,7 @@ async function AdminDashboard() {
     blogs = [];
     allBlogs = [];
     popularCategories = [];
+    trends = null;
   }
 
   // Calculate total stats
@@ -174,10 +180,10 @@ async function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <DashboardStats stats={stats} />
+        <DashboardStats stats={stats} trends={trends} />
 
         {/* Analytics & Charts */}
-        <AnalyticsChart data={analyticsData} categoryData={popularCategories} pieChartType="page" />
+        <AnalyticsChart data={analyticsData} categoryData={popularCategories} historyData={analyticsHistory} pieChartType="page" />
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

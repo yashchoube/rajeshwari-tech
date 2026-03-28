@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        .editor { 
+            border: 1px solid #ddd; 
+            min-height: 200px; 
+            padding: 10px; 
+            margin: 10px 0;
+            background: white;
+        }
+        .toolbar { 
+            display: flex; 
+            gap: 5px; 
+            padding: 10px; 
+            background: #f8f9fa; 
+            border-bottom: 1px solid #ddd;
+        }
+        .toolbar button, .toolbar label { 
+            padding: 8px 12px; 
+            border: 1px solid #ddd; 
+            background: white; 
+            cursor: pointer; 
+            border-radius: 4px;
+        }
+        .toolbar button:hover, .toolbar label:hover { 
+            background: #e9ecef; 
+        }
+    </style>
+</head>
+<body>
+    <h1>Upload Button Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Direct File Input</h2>
+        <input type="file" id="directInput" accept="image/*" onchange="testDirectUpload()" />
+        <div id="directResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Label with Hidden Input (Like RichTextEditor)</h2>
+        <div class="toolbar">
+            <label for="hiddenInput" style="display: flex; align-items: center; gap: 5px;">
+                📤 Upload
+            </label>
+            <input 
+                type="file" 
+                id="hiddenInput" 
+                accept="image/*" 
+                style="display: none;"
+                onchange="testHiddenUpload()"
+            />
+        </div>
+        <div id="hiddenResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Programmatic Click</h2>
+        <button class="btn btn-primary" onclick="testProgrammaticClick()">Click to Upload</button>
+        <input 
+            type="file" 
+            id="programmaticInput" 
+            accept="image/*" 
+            style="display: none;"
+            onchange="testProgrammaticUpload()"
+        />
+        <div id="programmaticResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Rich Text Editor Simulation</h2>
+        <div class="editor" contenteditable="true" id="testEditor">
+            <p>This simulates the rich text editor. Try the upload button below:</p>
+        </div>
+        <div class="toolbar">
+            <button onclick="document.execCommand('bold')">Bold</button>
+            <button onclick="document.execCommand('italic')">Italic</button>
+            <label for="editorInput" style="display: flex; align-items: center; gap: 5px;">
+                📤 Upload
+            </label>
+            <input 
+                type="file" 
+                id="editorInput" 
+                accept="image/*" 
+                style="display: none;"
+                onchange="testEditorUpload()"
+            />
+        </div>
+        <div id="editorResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Logs</h2>
+        <div id="consoleLogs" style="background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <script>
+        // Override console.log to show in our page
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logDiv = document.getElementById('consoleLogs');
+        
+        function addLog(message, type = 'log') {
+            const div = document.createElement('div');
+            div.style.color = type === 'error' ? 'red' : 'black';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(div);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog(args.join(' '), 'error');
+        };
+
+        async function testDirectUpload() {
+            const fileInput = document.getElementById('directInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('directResult');
+            
+            console.log('Direct upload test started');
+            
+            if (!file) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = 'No file selected';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Uploading...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('http://localhost:3001/api/upload/image', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Direct upload successful! URL: ${data.url}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Direct upload failed: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Direct upload error: ${error.message}`;
+            }
+        }
+
+        async function testHiddenUpload() {
+            const fileInput = document.getElementById('hiddenInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('hiddenResult');
+            
+            console.log('Hidden upload test started');
+            
+            if (!file) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = 'No file selected';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Uploading...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('http://localhost:3001/api/upload/image', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Hidden upload successful! URL: ${data.url}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Hidden upload failed: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Hidden upload error: ${error.message}`;
+            }
+        }
+
+        function testProgrammaticClick() {
+            console.log('Programmatic click test started');
+            const fileInput = document.getElementById('programmaticInput');
+            fileInput.click();
+        }
+
+        async function testProgrammaticUpload() {
+            const fileInput = document.getElementById('programmaticInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('programmaticResult');
+            
+            console.log('Programmatic upload test started');
+            
+            if (!file) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = 'No file selected';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Uploading...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('http://localhost:3001/api/upload/image', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Programmatic upload successful! URL: ${data.url}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Programmatic upload failed: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Programmatic upload error: ${error.message}`;
+            }
+        }
+
+        async function testEditorUpload() {
+            const fileInput = document.getElementById('editorInput');
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('editorResult');
+            const editor = document.getElementById('testEditor');
+            
+            console.log('Editor upload test started');
+            
+            if (!file) {
+                resultDiv.style.display = 'block';
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = 'No file selected';
+                return;
+            }
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Uploading...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', file);
+                
+                const response = await fetch('http://localhost:3001/api/upload/image', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    // Insert image into editor
+                    const imgHtml = `
+                        <div style="text-align: center; margin: 10px 0;">
+                            <img src="http://localhost:3001${data.url}" alt="Uploaded image" style="max-width: 100%; height: auto; border-radius: 8px;" />
+                        </div>
+                    `;
+                    editor.innerHTML += imgHtml;
+                    
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `✅ Editor upload successful! Image inserted.`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `❌ Editor upload failed: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `❌ Editor upload error: ${error.message}`;
+            }
+        }
+
+        // Test if the page loads correctly
+        console.log('Debug test page loaded');
+    </script>
+</body>
+</html>

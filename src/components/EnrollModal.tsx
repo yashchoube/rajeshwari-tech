@@ -273,7 +273,7 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
                           required
                           value={formData.name}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500"
                           placeholder="Enter your full name"
                         />
                       </div>
@@ -287,7 +287,7 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
                           required
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                          className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500"
                           placeholder="your.email@example.com"
                         />
                       </div>
@@ -303,7 +303,7 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
                         required
                         value={formData.phone}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500"
                         placeholder="+91 98765 43210"
                       />
                     </div>
@@ -316,7 +316,7 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
                         name="experience"
                         value={formData.experience}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                       >
                         <option value="beginner">Beginner (0-1 years)</option>
                         <option value="intermediate">Intermediate (1-3 years)</option>
@@ -333,7 +333,7 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
                         value={formData.goals}
                         onChange={handleInputChange}
                         rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500"
                         placeholder="What do you want to achieve with this course?"
                       />
                     </div>
@@ -347,7 +347,7 @@ const EnrollModal = ({ isOpen, onClose, course }: EnrollModalProps) => {
                         name="referral"
                         value={formData.referral}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent placeholder-gray-500"
                         placeholder="Social media, friend, search engine, etc."
                       />
                     </div>

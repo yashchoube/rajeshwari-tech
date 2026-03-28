@@ -66,37 +66,43 @@ interface DashboardStatsProps {
         totalEnquiries: number;
         totalBlogs: number;
     };
+    trends?: {
+        views: { value: number; trend: number };
+        bookings: { value: number; trend: number };
+        enquiries: { value: number; trend: number };
+        blogs: { value: number; trend: number };
+    };
 }
 
-export default function DashboardStats({ stats }: DashboardStatsProps) {
+export default function DashboardStats({ stats, trends }: DashboardStatsProps) {
     const statItems = [
         {
             title: 'Total Views',
             value: stats.totalViews.toLocaleString(),
             icon: Eye,
             color: 'bg-blue-500',
-            trend: { value: 12.5, isPositive: true }, // Mock trend data
+            trend: trends ? { value: trends.views.trend, isPositive: trends.views.trend >= 0 } : undefined,
         },
         {
             title: 'Demo Bookings',
             value: stats.totalBookings,
             icon: Calendar,
             color: 'bg-purple-500',
-            trend: { value: 8.2, isPositive: true },
+            trend: trends ? { value: trends.bookings.trend, isPositive: trends.bookings.trend >= 0 } : undefined,
         },
         {
             title: 'Enquiries',
             value: stats.totalEnquiries,
             icon: Users,
             color: 'bg-orange-500',
-            trend: { value: 2.4, isPositive: false },
+            trend: trends ? { value: trends.enquiries.trend, isPositive: trends.enquiries.trend >= 0 } : undefined,
         },
         {
             title: 'Published Blogs',
             value: stats.totalBlogs,
             icon: FileText,
             color: 'bg-green-500',
-            trend: { value: 5.0, isPositive: true },
+            trend: trends ? { value: trends.blogs.trend, isPositive: trends.blogs.trend >= 0 } : undefined,
         },
     ];
 

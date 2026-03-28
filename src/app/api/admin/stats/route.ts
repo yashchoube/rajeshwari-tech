@@ -7,7 +7,9 @@ import {
     getPendingCommentsCount,
     getPendingBlogsCount,
     getAllBlogsAdmin,
-    getAnalyticsData
+    getAnalyticsData,
+    getDashboardTrends,
+    getAnalyticsHistoryNew
 } from '@/lib/database';
 
 /**
@@ -25,6 +27,8 @@ export async function GET(request: NextRequest) {
         const pendingBlogs = getPendingBlogsCount();
         const allBlogs = getAllBlogsAdmin();
         const analyticsData = getAnalyticsData();
+        const trends = getDashboardTrends();
+        const analyticsHistory = getAnalyticsHistoryNew(7); // Last 7 days for the chart
 
         // Calculate post interests (top category)
         const topCategory = popularCategories.length > 0
@@ -43,7 +47,9 @@ export async function GET(request: NextRequest) {
             publishedBlogs: allBlogs.filter(b => b.status === 'published').length,
             pendingBlogsCount: allBlogs.filter(b => b.status === 'pending').length,
             totalViews: engagementStats.totalViews,
-            analyticsData
+            analyticsData,
+            trends,
+            analyticsHistory
         };
 
         return NextResponse.json(stats);

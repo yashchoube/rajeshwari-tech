@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Admin Portal Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .status-dropdown { 
+            padding: 5px 10px; 
+            border-radius: 15px; 
+            border: none; 
+            font-size: 12px; 
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-confirmed { background: #d1fae5; color: #065f46; }
+        .status-completed { background: #dbeafe; color: #1e40af; }
+        .status-cancelled { background: #f3f4f6; color: #374151; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Complete Admin Portal Test</h1>
+    
+    <div class="test-section success">
+        <h2>✅ Admin Portal Status</h2>
+        <p><strong>URL:</strong> <a href="http://localhost:3000/admin" target="_blank">http://localhost:3000/admin</a></p>
+        <p><strong>Username:</strong> admin</p>
+        <p><strong>Password:</strong> admin123!</p>
+        <p><strong>Status:</strong> ✅ Database initialized with sample data</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 New Features Added</h2>
+        <ul>
+            <li>✅ <strong>Status Update Dropdowns</strong> - Admin can now update enrollment and demo booking status</li>
+            <li>✅ <strong>API Endpoints</strong> - Created `/api/admin/demo-bookings/update-status` and `/api/admin/enrollments/update-status`</li>
+            <li>✅ <strong>Database Functions</strong> - Added `updateDemoBookingStatus` and `updateEnrollmentStatus` functions</li>
+            <li>✅ <strong>Real-time Updates</strong> - Status changes are reflected immediately in the UI</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>📊 Available Status Options</h2>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <span class="status-dropdown status-pending">Pending</span>
+            <span class="status-dropdown status-confirmed">Confirmed</span>
+            <span class="status-dropdown status-completed">Completed</span>
+            <span class="status-dropdown status-cancelled">Cancelled</span>
+            <span class="status-dropdown" style="background: #e0e7ff; color: #3730a3;">Enrolled</span>
+        </div>
+        <p><em>For Demo Bookings:</em> Pending → Confirmed → Completed</p>
+        <p><em>For Enrollments:</em> Pending → Confirmed → Enrolled → Completed</p>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Test Status Updates</h2>
+        <button onclick="testDemoBookingUpdate()">Test Demo Booking Status Update</button>
+        <button onclick="testEnrollmentUpdate()">Test Enrollment Status Update</button>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="test-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>📋 Admin Portal Features</h2>
+        <ul>
+            <li><strong>Dashboard:</strong> Overview of blogs, users, and statistics</li>
+            <li><strong>Blog Management:</strong> Create, edit, approve, and delete blog posts</li>
+            <li><strong>User Management:</strong> View and manage demo bookings and enrollments</li>
+            <li><strong>Status Updates:</strong> Update enrollment and demo booking status with dropdowns</li>
+            <li><strong>Search & Filter:</strong> Find users by name, email, or course</li>
+            <li><strong>Export:</strong> Download user data as CSV</li>
+        </ul>
+    </div>
+
+    <div class="test-section success">
+        <h2>🎉 Summary</h2>
+        <p><strong>✅ Missing functionality has been added!</strong></p>
+        <p>The admin portal now includes:</p>
+        <ul>
+            <li>Status update dropdowns for both demo bookings and enrollments</li>
+            <li>Real-time status updates with visual feedback</li>
+            <li>Proper error handling and user feedback</li>
+            <li>Database functions for status management</li>
+            <li>API endpoints for status updates</li>
+        </ul>
+        <p><strong>Next Steps:</strong> Access the admin portal and test the status update functionality!</p>
+    </div>
+
+    <script>
+        let sessionCookie = '';
+
+        async function testAuth() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin123!' })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    sessionCookie = data.data.sessionId;
+                    showResult('Authentication', 'SUCCESS', 'Login successful');
+                } else {
+                    showResult('Authentication', 'ERROR', data.error);
+                }
+            } catch (error) {
+                showResult('Authentication', 'ERROR', error.message);
+            }
+        }
+
+        async function testDemoBookingUpdate() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/demo-bookings/update-status', {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cookie': `admin-session=${sessionCookie}`
+                    },
+                    body: JSON.stringify({ id: 1, status: 'confirmed' })
+                });
+                
+                const data = await response.json();
+                showResult('Demo Booking Update', response.status, data);
+            } catch (error) {
+                showResult('Demo Booking Update', 'ERROR', error.message);
+            }
+        }
+
+        async function testEnrollmentUpdate() {
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/enrollments/update-status', {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Cookie': `admin-session=${sessionCookie}`
+                    },
+                    body: JSON.stringify({ id: 1, status: 'enrolled' })
+                });
+                
+                const data = await response.json();
+                showResult('Enrollment Update', response.status, data);
+            } catch (error) {
+                showResult('Enrollment Update', 'ERROR', error.message);
+            }
+        }
+
+        function showResult(testName, status, data) {
+            const resultsDiv = document.getElementById('test-results');
+            const isSuccess = status === 200 || status === 'SUCCESS';
+            const className = isSuccess ? 'success' : 'error';
+            
+            resultsDiv.innerHTML += `
+                <div class="${className}">
+                    <h3>${testName}</h3>
+                    <p><strong>Status:</strong> ${status}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        // Auto-run authentication test
+        window.onload = function() {
+            testAuth();
+        };
+    </script>
+</body>
+</html>

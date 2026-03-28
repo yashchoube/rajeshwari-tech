@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Selection Modal - Smart Enroll Now!</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .test-content {
+            padding: 30px;
+        }
+        .feature-section {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .feature-section h3 {
+            color: #7c3aed;
+            margin-top: 0;
+        }
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 15px 0;
+        }
+        .before, .after {
+            padding: 15px;
+            border-radius: 6px;
+        }
+        .before {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+        }
+        .after {
+            background: #dcfce7;
+            border: 1px solid #bbf7d0;
+        }
+        .before h4 {
+            color: #dc2626;
+            margin-top: 0;
+        }
+        .after h4 {
+            color: #16a34a;
+            margin-top: 0;
+        }
+        .button {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        .button:hover {
+            background: #7c3aed;
+        }
+        .code-example {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .modal-preview {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .modal-preview h5 {
+            color: #1976d2;
+            margin-top: 0;
+        }
+        .course-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .course-card h4 {
+            color: #374151;
+            margin-top: 0;
+        }
+        .course-card p {
+            color: #6b7280;
+            margin-bottom: 10px;
+        }
+        .course-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #6b7280;
+            margin: 10px 0;
+        }
+        .price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #7c3aed;
+        }
+        .badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .level-badge {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🎉 Course Selection Modal - Smart Enroll Now!</h1>
+            <p>Beautiful, user-friendly course selection with attractive images</p>
+        </div>
+        
+        <div class="test-content">
+            <h2>🎯 Problem Solved</h2>
+            
+            <div class="before-after">
+                <div class="before">
+                    <h4>❌ Before (404 Error)</h4>
+                    <ul>
+                        <li>Clicking "Enroll Now" → 404 error</li>
+                        <li>Redirected to non-existent /courses page</li>
+                        <li>Poor user experience</li>
+                        <li>No course selection process</li>
+                    </ul>
+                </div>
+                <div class="after">
+                    <h4>✅ After (Smart Modal)</h4>
+                    <ul>
+                        <li><span class="highlight">Beautiful course selection modal</span></li>
+                        <li><span class="highlight">Attractive course images</span></li>
+                        <li><span class="highlight">Search and filter functionality</span></li>
+                        <li><span class="highlight">Professional user experience</span></li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2>🚀 New Features Implemented</h2>
+            
+            <div class="feature-section">
+                <h3>1. 🎨 Smart Course Selection Modal</h3>
+                <p>When users click "Enroll Now", they see a beautiful modal with:</p>
+                <ul>
+                    <li><strong>Course Grid:</strong> All courses displayed in attractive cards</li>
+                    <li><strong>Search Functionality:</strong> Find courses by name, description, or category</li>
+                    <li><strong>Filter Options:</strong> Filter by category and difficulty level</li>
+                    <li><strong>Course Images:</strong> High-quality, relevant images for each course</li>
+                    <li><strong>Course Details:</strong> Price, duration, rating, student count</li>
+                    <li><strong>Badges & Levels:</strong> Visual indicators for course status and difficulty</li>
+                </ul>
+            </div>
+
+            <div class="feature-section">
+                <h3>2. 🖼️ Attractive Course Images</h3>
+                <p>Each course has a carefully selected, high-quality image:</p>
+                <div class="course-card">
+                    <h4>Core Java + Competitive Programming</h4>
+                    <p>Professional coding environment image</p>
+                    <div class="badge">Best Seller</div>
+                    <div class="level-badge">Beginner</div>
+                </div>
+                <div class="course-card">
+                    <h4>Python Full Stack Development</h4>
+                    <p>Modern web development workspace</p>
+                    <div class="badge">Popular</div>
+                    <div class="level-badge">Beginner</div>
+                </div>
+                <div class="course-card">
+                    <h4>Data Structures & Algorithms</h4>
+                    <p>Algorithm visualization and coding</p>
+                    <div class="badge">Top Rated</div>
+                    <div class="level-badge">Intermediate</div>
+                </div>
+            </div>
+
+            <div class="feature-section">
+                <h3>3. 🔍 Advanced Search & Filtering</h3>
+                <div class="modal-preview">
+                    <h5>Search & Filter Features:</h5>
+                    <ul>
+                        <li><strong>Search Bar:</strong> Search by course name, description, or category</li>
+                        <li><strong>Category Filter:</strong> Programming, Python, Java, Full Stack, etc.</li>
+                        <li><strong>Level Filter:</strong> Beginner, Intermediate, Advanced, Expert</li>
+                        <li><strong>Real-time Results:</strong> Instant filtering as you type</li>
+                        <li><strong>Results Counter:</strong> Shows "X of Y courses"</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="feature-section">
+                <h3>4. 📱 Mobile-Friendly Design</h3>
+                <ul>
+                    <li><strong>Responsive Grid:</strong> Adapts to different screen sizes</li>
+                    <li><strong>Touch-Friendly:</strong> Large buttons and touch targets</li>
+                    <li><strong>Mobile Menu Integration:</strong> Works from mobile navigation</li>
+                    <li><strong>Smooth Animations:</strong> Framer Motion animations for better UX</li>
+                </ul>
+            </div>
+
+            <h2>🧪 How to Test the New Modal</h2>
+            
+            <div class="feature-section">
+                <h3>Test 1: Open Course Selection Modal</h3>
+                <ol>
+                    <li>Go to any page (homepage, blog, etc.)</li>
+                    <li>Click the purple "Enroll Now" button in the top navigation</li>
+                    <li><strong>Verify:</strong> Beautiful modal opens with course grid</li>
+                    <li><strong>Verify:</strong> All courses are displayed with images</li>
+                    <li><strong>Verify:</strong> Search and filter options are visible</li>
+                </ol>
+            </div>
+
+            <div class="feature-section">
+                <h3>Test 2: Search and Filter Functionality</h3>
+                <ol>
+                    <li>Open the course selection modal</li>
+                    <li>Type "Java" in the search box</li>
+                    <li><strong>Verify:</strong> Only Java-related courses appear</li>
+                    <li>Select "Programming" from category filter</li>
+                    <li><strong>Verify:</strong> Results update to show only programming courses</li>
+                    <li>Select "Beginner" from level filter</li>
+                    <li><strong>Verify:</strong> Only beginner-level courses are shown</li>
+                </ol>
+            </div>
+
+            <div class="feature-section">
+                <h3>Test 3: Course Selection and Navigation</h3>
+                <ol>
+                    <li>Open the course selection modal</li>
+                    <li>Click "View Course" on any course card</li>
+                    <li><strong>Verify:</strong> Modal closes and redirects to course detail page</li>
+                    <li><strong>Verify:</strong> Course detail page loads correctly</li>
+                    <li>Test with different courses to ensure all work</li>
+                </ol>
+            </div>
+
+            <div class="feature-section">
+                <h3>Test 4: Mobile Experience</h3>
+                <ol>
+                    <li>Open the site on mobile or resize browser window</li>
+                    <li>Click "Enroll Now" button</li>
+                    <li><strong>Verify:</strong> Modal opens and is mobile-friendly</li>
+                    <li><strong>Verify:</strong> Course cards stack properly on mobile</li>
+                    <li><strong>Verify:</strong> Search and filters work on mobile</li>
+                </ol>
+            </div>
+
+            <h2>🎉 Results</h2>
+            
+            <div class="feature-section">
+                <h3>✅ Complete Solution Implemented:</h3>
+                <ul>
+                    <li><strong>No More 404 Errors:</strong> Modal works on all pages</li>
+                    <li><strong>Beautiful UI:</strong> Professional, modern design</li>
+                    <li><strong>User-Friendly:</strong> Easy course selection process</li>
+                    <li><strong>Attractive Images:</strong> High-quality course visuals</li>
+                    <li><strong>Advanced Features:</strong> Search, filter, and navigation</li>
+                    <li><strong>Mobile Support:</strong> Works perfectly on all devices</li>
+                    <li><strong>Performance:</strong> Smooth animations and fast loading</li>
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <button class="button" onclick="window.open('http://localhost:3001/', '_blank')">
+                    🚀 Test the Course Selection Modal
+                </button>
+                <button class="button" onclick="window.open('http://localhost:3001/blogs/api-test-1759342011430', '_blank')">
+                    📝 Test from Blog Page
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

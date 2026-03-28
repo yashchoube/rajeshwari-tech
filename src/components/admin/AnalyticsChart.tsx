@@ -37,27 +37,25 @@ export interface CategoryData {
 interface AnalyticsChartProps {
     data: AnalyticsData[];
     categoryData: CategoryData[];
+    historyData?: { date: string; views: number }[];
     pieChartType?: 'category' | 'page';
 }
 
 const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316'];
 
-export default function AnalyticsChart({ data, categoryData, pieChartType = 'category' }: AnalyticsChartProps) {
-    // Transform data for the chart if needed, or use as is
-    // For this example, we'll assume 'data' is suitable for a simple bar/area chart
-    // In a real app, you might want to aggregate visits by date
-
-    // Mock time-series data for the area chart (since the provided interface is per-page)
-    // In a real implementation, you'd fetch historical data
-    const mockTimeSeriesData = [
-        { name: 'Mon', visits: 4000, unique: 2400 },
-        { name: 'Tue', visits: 3000, unique: 1398 },
-        { name: 'Wed', visits: 2000, unique: 9800 },
-        { name: 'Thu', visits: 2780, unique: 3908 },
-        { name: 'Fri', visits: 1890, unique: 4800 },
-        { name: 'Sat', visits: 2390, unique: 3800 },
-        { name: 'Sun', visits: 3490, unique: 4300 },
-    ];
+export default function AnalyticsChart({ data, categoryData, historyData, pieChartType = 'category' }: AnalyticsChartProps) {
+    // Traffic data for the area chart
+    const trafficData = (historyData && historyData.length > 0) 
+        ? historyData.map(item => ({ name: item.date, visits: item.views }))
+        : [
+            { name: 'Mon', visits: 0 },
+            { name: 'Tue', visits: 0 },
+            { name: 'Wed', visits: 0 },
+            { name: 'Thu', visits: 0 },
+            { name: 'Fri', visits: 0 },
+            { name: 'Sat', visits: 0 },
+            { name: 'Sun', visits: 0 },
+        ];
 
     // Prepare data for the pie chart based on type
     const pieData = pieChartType === 'category'
@@ -132,7 +130,7 @@ export default function AnalyticsChart({ data, categoryData, pieChartType = 'cat
                 <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
-                            data={mockTimeSeriesData}
+                            data={trafficData}
                             margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
                         >
                             <defs>

@@ -4,10 +4,11 @@ import Footer from '@/components/Footer';
 import BlogCard from '@/components/BlogCard';
 import NewsletterSubscription from '@/components/NewsletterSubscription';
 import AnalyticsTracker from '@/components/AnalyticsTracker';
+import { getAllBlogs } from '@/lib/database';
 
 // ----------------------
 // Update Type: Changed
-// Description: Updated Blogs Page to fetch blogs from API and display them
+// Description: Updated Blogs Page to fetch blogs from local database and display them
 // Updated By: Himanshu
 // Updated Until: end of file
 // ----------------------
@@ -17,11 +18,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BlogsPage() {
-  // Fetch blogs from API
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.rajeshwaritech.com';
-  const blogsResponse = await fetch(`${baseUrl}/api/blogs`, { cache: 'no-store' });
-  const blogsData = await blogsResponse.json();
-  const blogs = blogsData.blogs || [];
+  // Fetch blogs from database
+  const blogs = await getAllBlogs();
 
   // Filter featured blogs
   const featuredBlogs = blogs.filter((blog: any) => blog.featured);

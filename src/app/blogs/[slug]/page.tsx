@@ -39,7 +39,7 @@ export async function generateMetadata({ params, searchParams }: BlogPageProps):
   const { slug } = await params;
   const sp = (await (searchParams || Promise.resolve({}))) as Record<string, any>;
   const preview = sp?.preview === 'true';
-  const blog = await (preview ? (await import('@/lib/neon-database')).getBlogBySlugAdmin(slug) : getBlogBySlug(slug)) as
+  const blog = await (preview ? (await import('@/lib/database')).getBlogBySlugAdmin(slug) : getBlogBySlug(slug)) as
     | BlogRecord
     | undefined;
 
@@ -178,71 +178,95 @@ export default async function BlogPage({ params, searchParams }: BlogPageProps) 
               )}
 
               {/* Blog Content (stored as HTML) */}
-              <div className="prose prose-lg max-w-none blog-content-wrapper">
+              <div className="blog-content-wrapper text-gray-700 leading-relaxed max-w-none">
                 <style dangerouslySetInnerHTML={{
                   __html: `
-                  .blog-content-wrapper * {
-                    color: #374151 !important; /* text-gray-700 */
-                    background-color: transparent !important;
-                    border: none !important;
-                    box-shadow: none !important;
+                  .blog-content-wrapper {
+                    font-size: 1.125rem;
+                    line-height: 1.8;
+                    color: #374151;
                   }
-                  .blog-content-wrapper h1, .blog-content-wrapper h2, .blog-content-wrapper h3, .blog-content-wrapper h4, .blog-content-wrapper h5, .blog-content-wrapper h6 {
-                    color: #111827 !important; /* text-gray-900 */
+                  .blog-content-wrapper h1, .blog-content-wrapper h2, .blog-content-wrapper h3, .blog-content-wrapper h4 {
+                    color: #111827;
+                    font-weight: 700;
+                    margin-top: 2rem;
+                    margin-bottom: 1rem;
+                    line-height: 1.3;
                   }
+                  .blog-content-wrapper h1 { font-size: 2.25rem; }
+                  .blog-content-wrapper h2 { font-size: 1.875rem; }
+                  .blog-content-wrapper h3 { font-size: 1.5rem; }
+                  
+                  .blog-content-wrapper p { margin-bottom: 1.5rem; }
+                  
                   .blog-content-wrapper a {
-                    color: #4f46e5 !important; /* text-indigo-600 */
-                    text-decoration: underline !important;
+                    color: #4f46e5;
+                    text-decoration: underline;
+                    font-weight: 500;
                   }
+                  .blog-content-wrapper a:hover { color: #4338ca; }
+                  
+                  .blog-content-wrapper ul, .blog-content-wrapper ol {
+                    margin-bottom: 1.5rem;
+                    padding-left: 1.5rem;
+                  }
+                  .blog-content-wrapper ul { list-style-type: disc; }
+                  .blog-content-wrapper ol { list-style-type: decimal; }
+                  .blog-content-wrapper li { margin-bottom: 0.5rem; }
+                  
+                  .blog-content-wrapper blockquote {
+                    border-left: 4px solid #4f46e5;
+                    background-color: #f9fafb;
+                    margin: 2rem 0;
+                    padding: 1.5rem;
+                    font-style: italic;
+                    color: #4b5563;
+                  }
+                  
                   .blog-content-wrapper pre {
-                    background-color: #1f2937 !important; /* gray-800 */
-                    color: #f3f4f6 !important; /* gray-100 */
-                    padding: 1rem !important;
-                    border-radius: 0.5rem !important;
-                    overflow-x: auto !important;
+                    background-color: #1f2937;
+                    color: #f3f4f6;
+                    padding: 1.25rem;
+                    border-radius: 0.5rem;
+                    overflow-x: auto;
+                    margin: 2rem 0;
+                    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
                   }
-                  .blog-content-wrapper pre * {
-                    color: #f3f4f6 !important; /* Force code inside pre to be light */
-                    background-color: transparent !important;
-                  }
+                  
                   .blog-content-wrapper code {
-                     color: #ef4444 !important; /* red-500 for inline code */
-                     background-color: #f3f4f6 !important; /* gray-100 */
-                     padding: 0.2rem 0.4rem !important;
-                     border-radius: 0.25rem !important;
+                    background-color: #f3f4f6;
+                    color: #ef4444;
+                    padding: 0.2rem 0.4rem;
+                    border-radius: 0.25rem;
+                    font-size: 0.875em;
                   }
                   .blog-content-wrapper pre code {
-                    background-color: transparent !important;
-                    color: #f3f4f6 !important;
-                    padding: 0 !important;
+                    background-color: transparent;
+                    color: inherit;
+                    padding: 0;
+                    font-size: 0.9em;
                   }
+                  
                   .blog-content-wrapper img {
-                    display: block !important;
-                    max-width: 100% !important;
-                    height: auto !important;
-                    margin: 1.5rem auto !important;
-                    border-radius: 0.5rem !important;
+                    max-width: 100%;
+                    height: auto;
+                    margin: 2.5rem auto;
+                    display: block;
+                    border-radius: 0.75rem;
+                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
                   }
-                  .blog-content-wrapper blockquote {
-                    border-left: 4px solid #4f46e5 !important;
-                    background-color: #f9fafb !important;
-                    color: #4b5563 !important;
-                    padding: 1rem !important;
-                    font-style: italic !important;
+                  
+                  .blog-content-wrapper table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 2rem 0;
                   }
-                  .blog-content-wrapper ul, .blog-content-wrapper ol {
-                    padding-left: 1.5rem !important;
-                    list-style-position: inside !important;
+                  .blog-content-wrapper th, .blog-content-wrapper td {
+                    border: 1px solid #e5e7eb;
+                    padding: 0.75rem;
+                    text-align: left;
                   }
-                  .blog-content-wrapper ul {
-                    list-style-type: disc !important;
-                  }
-                  .blog-content-wrapper ol {
-                    list-style-type: decimal !important;
-                  }
-                  .blog-content-wrapper li {
-                    margin-bottom: 0.5rem !important;
-                  }
+                  .blog-content-wrapper th { background-color: #f9fafb; font-weight: 600; }
                 ` }} />
                 <div className="text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeHtml(blog.content) }} suppressHydrationWarning />
               </div>

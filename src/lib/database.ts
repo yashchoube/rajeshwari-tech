@@ -732,5 +732,53 @@ export const getPendingBlogsCount = (): number => {
   return result.count || 0;
 };
 
+export const getDashboardTrends = () => {
+  const getCount = (table: string, daysAgoStart: number, daysAgoEnd: number) => {
+    const stmt = db.prepare(`
+      SELECT COUNT(*) as count 
+      FROM ${table} 
+      WHERE created_at >= datetime('now', '-' || ? || ' days')
+      AND created_at < datetime('now', '-' || ? || ' days')
+    `);
+    const result = stmt.get(daysAgoEnd, daysAgoStart) as { count: number };
+    return result.count || 0;
+  };
+
+  const getVisitCount = (daysAgoStart: number, daysAgoEnd: number) => {
+    const stmt = db.prepare(`
+      SELECT COUNT(*) as count 
+      FROM analytics 
+      WHERE visit_date >= datetime('now', '-' || ? || ' days')
+      AND visit_date < datetime('now', '-' || ? || ' days')
+    `);
+    const result = stmt.get(daysAgoEnd, daysAgoStart) as { count: number };
+    return result.count || 0;
+  };
+
+  const calculateTrend = (current: number, previous: number) => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return Math.round(((current - previous) / previous) * 100 * 10) / 10;
+  };
+
+  // Current period (0-30 days ago)
+  const currentViews = getVisitCount(0, 30);
+  const currentBookings = getCount('demo_bookings', 0, 30);
+  const currentEnquiries = getCount('enquiries', 0, 30);
+  const currentBlogs = getCount('blogs', 0, 30);
+
+  // Previous period (30-60 days ago)
+  const previousViews = getVisitCount(30, 60);
+  const previousBookings = getCount('demo_bookings', 30, 60);
+  const previousEnquiries = getCount('enquiries', 30, 60);
+  const previousBlogs = getCount('blogs', 30, 60);
+
+  return {
+    views: { value: currentViews, trend: calculateTrend(currentViews, previousViews) },
+    bookings: { value: currentBookings, trend: calculateTrend(currentBookings, previousBookings) },
+    enquiries: { value: currentEnquiries, trend: calculateTrend(currentEnquiries, previousEnquiries) },
+    blogs: { value: currentBlogs, trend: calculateTrend(currentBlogs, previousBlogs) }
+  };
+};
+
 // Initialize database on import
 initDatabase();

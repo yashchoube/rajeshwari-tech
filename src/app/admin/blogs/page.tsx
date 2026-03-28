@@ -71,6 +71,13 @@ interface Stats {
     total_views: number;
   }>;
   analyticsData: AnalyticsData[];
+  trends?: {
+    views: { value: number; trend: number };
+    bookings: { value: number; trend: number };
+    enquiries: { value: number; trend: number };
+    blogs: { value: number; trend: number };
+  };
+  analyticsHistory?: { date: string; views: number }[];
 }
 
 type ViewType = 'table' | 'grid';
@@ -343,6 +350,7 @@ export default function AdminBlogsPage() {
                 icon={Eye}
                 gradientFrom="#8b5cf6"
                 gradientTo="#6366f1"
+                trend={stats.trends ? { value: stats.trends.views.trend, isPositive: stats.trends.views.trend >= 0 } : undefined}
                 delay={0}
               />
               <StatCard
@@ -367,6 +375,7 @@ export default function AdminBlogsPage() {
                 icon={FileText}
                 gradientFrom="#ef4444"
                 gradientTo="#dc2626"
+                trend={stats.trends ? { value: stats.trends.blogs.trend, isPositive: stats.trends.blogs.trend >= 0 } : undefined}
                 delay={0.3}
               />
             </div>
@@ -376,6 +385,7 @@ export default function AdminBlogsPage() {
           <AnalyticsChart
             data={stats?.analyticsData || []}
             categoryData={stats?.popularCategories || []}
+            historyData={stats?.analyticsHistory || []}
           />
 
           {/* Featured Blogs Section - Responsive */}

@@ -849,6 +849,39 @@ export default function RichTextEditor({ value, onChange }: RichTextEditorProps)
         className="rich-editor-content min-h-64 max-h-[60vh] overflow-y-auto outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 rounded-b-lg"
         contentEditable={true}
         suppressContentEditableWarning={true}
+        onPaste={(e) => {
+          e.preventDefault();
+          const html = e.clipboardData.getData('text/html');
+          const text = e.clipboardData.getData('text/plain');
+
+          if (html) {
+            // Create a temporary element to parse and clean HTML
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Remove all style, class, and id attributes from all elements
+            const allElements = doc.querySelectorAll('*');
+            allElements.forEach(el => {
+              el.removeAttribute('style');
+              el.removeAttribute('class');
+              el.removeAttribute('id');
+              el.removeAttribute('jsaction');
+              el.removeAttribute('jscontroller');
+              el.removeAttribute('jsname');
+              el.removeAttribute('jsdata');
+              el.removeAttribute('jsmodel');
+              el.removeAttribute('jshide');
+            });
+
+            // Specific cleanup for Google search result noise
+            const noise = doc.querySelectorAll('style, script, meta, link');
+            noise.forEach(n => n.remove());
+
+            exec('insertHTML', doc.body.innerHTML);
+          } else {
+            exec('insertText', text);
+          }
+        }}
         onInput={() => editorRef.current && onChange(editorRef.current.innerHTML)}
         onKeyDown={(e) => {
           // Keyboard shortcuts

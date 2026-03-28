@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Blog Approval</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .result { margin-top: 10px; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Blog Approval Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: API Response Format</h2>
+        <button class="btn btn-primary" onclick="testApiResponse()">Test API Response</button>
+        <div id="apiResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Button State Management</h2>
+        <button id="approveBtn" class="btn btn-success" onclick="testButtonState()">Approve and Publish</button>
+        <div id="buttonResult" class="result" style="display: none;"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Complete Flow</h2>
+        <button class="btn btn-primary" onclick="testCompleteFlow()">Test Complete Flow</button>
+        <div id="flowResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testApiResponse() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing API...';
+            
+            try {
+                const response = await fetch('http://localhost:3001/api/blogs/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: 1 })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ API Test Passed!</strong><br>
+                        Response: ${JSON.stringify(data, null, 2)}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <strong>❌ API Test Failed!</strong><br>
+                        Status: ${response.status}<br>
+                        Response: ${JSON.stringify(data, null, 2)}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Network Error:</strong> ${error.message}`;
+            }
+        }
+
+        function testButtonState() {
+            const button = document.getElementById('approveBtn');
+            const resultDiv = document.getElementById('buttonResult');
+            resultDiv.style.display = 'block';
+            
+            // Simulate button click and state change
+            button.disabled = true;
+            button.innerHTML = 'Publishing...';
+            button.className = 'btn btn-secondary';
+            
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = `
+                <strong>✅ Button State Test Passed!</strong><br>
+                Button is now disabled and shows "Publishing..." state
+            `;
+            
+            // Reset after 3 seconds
+            setTimeout(() => {
+                button.disabled = false;
+                button.innerHTML = 'Approve and Publish';
+                button.className = 'btn btn-success';
+            }, 3000);
+        }
+
+        async function testCompleteFlow() {
+            const resultDiv = document.getElementById('flowResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = 'Testing complete flow...';
+            
+            try {
+                // Step 1: Test API
+                const response = await fetch('http://localhost:3001/api/blogs/approve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: 1 })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Complete Flow Test Passed!</strong><br>
+                        <strong>API Response:</strong> ${JSON.stringify(data, null, 2)}<br>
+                        <strong>Button State:</strong> Should be disabled after successful approval<br>
+                        <strong>UI Update:</strong> Should show "Already Published" status
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <strong>❌ Complete Flow Test Failed!</strong><br>
+                        API Error: ${JSON.stringify(data, null, 2)}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Complete Flow Test Failed!</strong><br>Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

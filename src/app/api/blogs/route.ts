@@ -79,7 +79,7 @@ export const POST = secureAPI(async function (request: NextRequest) {
       category: body.category.trim(),
       tags: body.tags?.trim() || undefined,
       featured: Boolean(body.featured),
-      status: 'pending'
+      status: 'published'
     });
 
     logger.info('Blog created successfully', { requestId, blogId });
