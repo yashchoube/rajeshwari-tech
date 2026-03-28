@@ -20,8 +20,8 @@ import {
 import StatCard from '@/components/admin/StatCard';
 import AnalyticsChart from '@/components/admin/AnalyticsChart';
 import BlogTableRow from '@/components/admin/BlogTableRow';
-import RichTextEditor from '@/components/RichTextEditor';
-import ImageManager from '@/components/ImageManager';
+import RichTextEditor from '@/components/admin/RichTextEditor';
+import ImageManager from '@/components/admin/ImageManager';
 import { handleImageError } from '@/lib/imageUtils';
 
 // ----------------------
