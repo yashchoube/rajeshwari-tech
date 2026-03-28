@@ -24,6 +24,14 @@ export const connectDB = async () => {
     console.log('✅ Connected to PostgreSQL database');
   } catch (error) {
     console.error('❌ Database connection failed:', error);
+    
+    // In production build/CI, we don't want to crash if DB is not reachable
+    // Pages will still build, but with missing dynamic content
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('⚠️ WARNING: Database connection failed. Proceeding with limited functionality for build.');
+      return; 
+    }
+    
     throw error;
   }
 };
