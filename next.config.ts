@@ -17,9 +17,6 @@ const nextConfig: NextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
   
-  // External packages for server components
-  serverExternalPackages: ['better-sqlite3'],
-  
   // Disable TypeScript checking for deployment
   typescript: {
     ignoreBuildErrors: true,
@@ -30,13 +27,6 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Webpack configuration for SQLite
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push('better-sqlite3');
-    }
-    return config;
-  },
 };
 
 export default nextConfig;

@@ -17,13 +17,14 @@ export async function POST(request: NextRequest) {
     });
     
     // Clear the session cookie with same settings as login
+    const cookieDomain = process.env.ADMIN_COOKIE_DOMAIN?.trim();
     response.cookies.set('admin-session', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 0, // Immediately expire
+      maxAge: 0,
       path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.rajeshwaritech.com' : undefined
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     });
     
     return response;

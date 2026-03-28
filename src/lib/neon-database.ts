@@ -1,16 +1,27 @@
 import { Pool } from 'pg';
 
-// Create a single connection pool for the entire application
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
+let pool: Pool | null = null;
+
+function getPool(): Pool {
+  const url = process.env.DATABASE_URL?.trim();
+  if (!url) {
+    throw new Error(
+      'DATABASE_URL is not set. Copy variables from Vercel (Production or Preview) into .env.local — see env.template.'
+    );
   }
-});
+  if (!pool) {
+    pool = new Pool({
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
+      max: Math.min(parseInt(process.env.PG_POOL_MAX || '10', 10), 20),
+    });
+  }
+  return pool;
+}
 
 // Helper function to execute queries
 async function query(text: string, params?: any[]) {
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     const res = await client.query(text, params);
     return res.rows;
@@ -21,7 +32,7 @@ async function query(text: string, params?: any[]) {
 
 // Helper function to execute single query
 async function queryOne(text: string, params?: any[]) {
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     const res = await client.query(text, params);
     return res.rows[0];
@@ -32,7 +43,7 @@ async function queryOne(text: string, params?: any[]) {
 
 // Helper function to execute insert/update/delete
 async function execute(text: string, params?: any[]) {
-  const client = await pool.connect();
+  const client = await getPool().connect();
   try {
     const res = await client.query(text, params);
     return res;
@@ -75,7 +86,7 @@ export const getAllEnrollments = async () => {
 
 export const updateEnrollmentStatus = async (id: number, status: string) => {
   const result = await execute(
-    'UPDATE enrollments SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+    'UPDATE enrollments SET status = $1 WHERE id = $2 RETURNING *',
     [status, id]
   );
   
@@ -122,7 +133,7 @@ export const getAllDemoBookings = async () => {
 
 export const updateDemoBookingStatus = async (id: number, status: string) => {
   const result = await execute(
-    'UPDATE demo_bookings SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
+    'UPDATE demo_bookings SET status = $1 WHERE id = $2 RETURNING *',
     [status, id]
   );
   
@@ -293,7 +304,7 @@ export const trackPageVisit = async (page: string, referrer?: string, userAgent?
 };
 
 export const getAnalyticsData = async () => {
-  return await query(`
+  const rows = await query(`
     SELECT 
       page,
       visits,
@@ -302,6 +313,155 @@ export const getAnalyticsData = async () => {
     FROM analytics 
     ORDER BY visits DESC
   `);
+  const slugRows = await query("SELECT slug FROM blogs WHERE status = 'published'");
+  const publishedSlugs = new Set((slugRows as { slug: string }[]).map((b) => b.slug));
+  return (rows as { page: string }[]).filter((item) => {
+    if (!item.page.startsWith('/blogs/')) return true;
+    if (item.page === '/blogs') return true;
+    const slug = item.page.replace('/blogs/', '');
+    return publishedSlugs.has(slug);
+  });
+};
+
+export const getPageAnalytics = async (page: string) => {
+  return await queryOne(
+    `
+    SELECT 
+      page,
+      visits,
+      unique_referrers,
+      last_visit
+    FROM analytics 
+    WHERE page = $1
+    `,
+    [page]
+  );
+};
+
+/** Daily buckets are not stored in the aggregated analytics table; returns a flat timeline for the chart UI. */
+export const getAnalyticsHistoryNew = async (days: number = 30): Promise<{ date: string; views: number }[]> => {
+  const out: { date: string; views: number }[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - i);
+    out.push({
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      views: 0,
+    });
+  }
+  return out;
+};
+
+export const getBlogViewsLast30Days = async (): Promise<number> => {
+  const row = await queryOne(`
+    SELECT COALESCE(SUM(views), 0)::int AS total_views
+    FROM blogs
+    WHERE created_at >= NOW() - INTERVAL '30 days'
+  `);
+  return row?.total_views ?? 0;
+};
+
+export const getNewSubscribersCount = async (days: number = 30): Promise<number> => {
+  const row = await queryOne(
+    `
+    SELECT COUNT(*)::int AS count
+    FROM newsletter_subscriptions
+    WHERE created_at >= NOW() - make_interval(days => $1)
+    `,
+    [days]
+  );
+  return row?.count ?? 0;
+};
+
+export const getBlogEngagementStats = async () => {
+  const row = await queryOne(`
+    SELECT 
+      COUNT(*)::int AS total_blogs,
+      COALESCE(SUM(views), 0)::bigint AS total_views,
+      COALESCE(AVG(views), 0)::float AS avg_views
+    FROM blogs
+    WHERE status = 'published'
+  `);
+  const avg = Number(row?.avg_views ?? 0);
+  return {
+    totalBlogs: row?.total_blogs ?? 0,
+    totalViews: Number(row?.total_views ?? 0),
+    avgViews: avg,
+    engagementRate: Math.round(avg * 100) / 100,
+  };
+};
+
+export const getPopularCategories = async () => {
+  return await query(`
+    SELECT 
+      category,
+      COUNT(*)::int AS post_count,
+      COALESCE(SUM(views), 0)::bigint AS total_views
+    FROM blogs
+    WHERE status = 'published'
+    GROUP BY category
+    ORDER BY post_count DESC
+    LIMIT 5
+  `);
+};
+
+export const getPendingCommentsCount = async (): Promise<number> => {
+  try {
+    const row = await queryOne(`
+      SELECT COUNT(*)::int AS count
+      FROM comments
+      WHERE status = 'pending'
+    `);
+    return row?.count ?? 0;
+  } catch {
+    return 0;
+  }
+};
+
+export const getPendingBlogsCount = async (): Promise<number> => {
+  const row = await queryOne(`
+    SELECT COUNT(*)::int AS count
+    FROM blogs
+    WHERE status = 'pending'
+  `);
+  return row?.count ?? 0;
+};
+
+function calculateTrend(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100 * 10) / 10;
+}
+
+export const getDashboardTrends = async () => {
+  const countRange = async (table: string, olderDays: number, newerDays: number) => {
+    const row = await queryOne(
+      `
+      SELECT COUNT(*)::int AS c FROM ${table}
+      WHERE created_at >= NOW() - make_interval(days => $1)
+        AND created_at < NOW() - make_interval(days => $2)
+      `,
+      [olderDays, newerDays]
+    );
+    return row?.c ?? 0;
+  };
+
+  const currentViewsRow = await queryOne(`SELECT COALESCE(SUM(visits), 0)::int AS v FROM analytics`);
+  const currentViews = currentViewsRow?.v ?? 0;
+
+  const currentBookings = await countRange('demo_bookings', 30, 0);
+  const currentEnquiries = await countRange('enquiries', 30, 0);
+  const currentBlogs = await countRange('blogs', 30, 0);
+
+  const previousBookings = await countRange('demo_bookings', 60, 30);
+  const previousEnquiries = await countRange('enquiries', 60, 30);
+  const previousBlogs = await countRange('blogs', 60, 30);
+
+  return {
+    views: { value: currentViews, trend: 0 },
+    bookings: { value: currentBookings, trend: calculateTrend(currentBookings, previousBookings) },
+    enquiries: { value: currentEnquiries, trend: calculateTrend(currentEnquiries, previousEnquiries) },
+    blogs: { value: currentBlogs, trend: calculateTrend(currentBlogs, previousBlogs) },
+  };
 };
 
 export const getReferrerData = async () => {
@@ -390,13 +550,12 @@ export const updateEnquiryStatus = async (id: number, status: string) => {
   }
 };
 
-// Close the pool when the application shuts down
 process.on('SIGINT', async () => {
-  await pool.end();
+  if (pool) await pool.end();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  await pool.end();
+  if (pool) await pool.end();
   process.exit(0);
 });

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Bold, Italic, Underline, List, ListOrdered, Link as LinkIcon, Image as ImageIcon, Smile, Heading1, Heading2, AlignLeft, AlignCenter, AlignRight, Quote, Code, Palette, Type, Upload, Table, Strikethrough, Subscript, Superscript, Indent, Outdent, Undo, Redo, Save } from 'lucide-react';
-import ImageCropper from './ImageCropper';
+import ImageCropper from '@/components/ImageCropper';
 
 interface RichTextEditorProps {
   value: string;

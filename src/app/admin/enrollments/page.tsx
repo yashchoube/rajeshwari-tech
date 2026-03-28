@@ -25,7 +25,7 @@ async function EnrollmentsPage() {
     let enrollments: Enrollment[] = [];
 
     try {
-        enrollments = getAllEnrollments() as unknown as Enrollment[];
+        enrollments = (await getAllEnrollments()) as unknown as Enrollment[];
     } catch (error) {
         console.error('Error fetching enrollments:', error);
     }

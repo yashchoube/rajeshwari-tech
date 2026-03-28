@@ -36,22 +36,22 @@ export async function POST(request: NextRequest) {
       lastLogin: new Date().toISOString()
     };
     
-    const sessionId = AuthService.createSession(user);
-    
-    // Set secure cookie with production-ready settings
+    const sessionToken = AuthService.createSession(user);
+
     const response = NextResponse.json({
       success: true,
       message: 'Login successful',
       data: { user: { id: user.id, username: user.username, email: user.email, role: user.role } }
     });
-    
-    response.cookies.set('admin-session', sessionId, {
-      httpOnly: true, // Prevent XSS attacks
-      secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-      sameSite: 'strict', // Prevent CSRF attacks
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: '/', // Available site-wide
-      domain: process.env.NODE_ENV === 'production' ? '.rajeshwaritech.com' : undefined // Production domain
+
+    const cookieDomain = process.env.ADMIN_COOKIE_DOMAIN?.trim();
+    response.cookies.set('admin-session', sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60,
+      path: '/',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
     });
     
     recordLoginAttempt(ip, true);

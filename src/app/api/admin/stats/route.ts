@@ -19,16 +19,16 @@ import {
 export async function GET(request: NextRequest) {
     try {
         // Fetch all statistics
-        const viewsLast30Days = getBlogViewsLast30Days();
-        const newSubscribers = getNewSubscribersCount(30);
-        const engagementStats = getBlogEngagementStats();
-        const popularCategories = getPopularCategories();
-        const pendingComments = getPendingCommentsCount();
-        const pendingBlogs = getPendingBlogsCount();
-        const allBlogs = getAllBlogsAdmin();
-        const analyticsData = getAnalyticsData();
-        const trends = getDashboardTrends();
-        const analyticsHistory = getAnalyticsHistoryNew(7); // Last 7 days for the chart
+        const viewsLast30Days = await getBlogViewsLast30Days();
+        const newSubscribers = await getNewSubscribersCount(30);
+        const engagementStats = await getBlogEngagementStats();
+        const popularCategories = await getPopularCategories();
+        const pendingComments = await getPendingCommentsCount();
+        const pendingBlogs = await getPendingBlogsCount();
+        const allBlogs = await getAllBlogsAdmin();
+        const analyticsData = await getAnalyticsData();
+        const trends = await getDashboardTrends();
+        const analyticsHistory = await getAnalyticsHistoryNew(7);
 
         // Calculate post interests (top category)
         const topCategory = popularCategories.length > 0

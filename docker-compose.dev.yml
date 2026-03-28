@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: rajeshwari-tech-db
+    environment:
+      POSTGRES_DB: rajeshwari_tech_dev
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password_123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev_user -d rajeshwari_tech_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: rajeshwari-tech-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@rajeshwaritech.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

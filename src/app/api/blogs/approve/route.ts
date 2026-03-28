@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
       try {
         // Get all active subscribers
         const subscribers = await getAllNewsletterSubscriptions();
-        const activeSubscribers = subscribers.filter(sub => sub.status === 'subscribed');
+        const activeSubscribers = subscribers.filter(
+          (sub) => sub.status === 'subscribed' || sub.status === 'active'
+        );
 
         if (activeSubscribers.length > 0) {
           // Parse interests for each subscriber

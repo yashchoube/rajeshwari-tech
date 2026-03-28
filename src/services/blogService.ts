@@ -1,8 +1,15 @@
-// Enterprise-grade blog service layer
-
-import { Database } from 'better-sqlite3';
-import { createBlog, getBlogBySlug, getBlogBySlugAdmin, getAllBlogs, getAllBlogsAdmin, approveBlog, deleteBlog, incrementBlogViews } from '@/lib/database';
-import { AppError, NotFoundError, ConflictError } from '@/lib/errorHandler';
+import {
+  createBlog,
+  getBlogBySlug,
+  getBlogBySlugAdmin,
+  getAllBlogs,
+  getAllBlogsAdmin,
+  approveBlog,
+  deleteBlog,
+  incrementBlogViews,
+  getBlogById,
+} from '@/lib/database';
+import { AppError, NotFoundError } from '@/lib/errorHandler';
 import { logger } from '@/lib/logger';
 
 export interface CreateBlogRequest {
@@ -35,18 +42,40 @@ export interface BlogResponse {
   updated_at: string;
 }
 
+type Row = Record<string, unknown>;
+
+function toResponse(row: Row | undefined): BlogResponse | null {
+  if (!row || row.id == null) return null;
+  return {
+    id: Number(row.id),
+    title: String(row.title ?? ''),
+    slug: String(row.slug ?? ''),
+    excerpt: String(row.excerpt ?? ''),
+    content: String(row.content ?? ''),
+    author: String(row.author ?? ''),
+    featuredImage:
+      row.featured_image != null && String(row.featured_image) !== ''
+        ? String(row.featured_image)
+        : undefined,
+    category: String(row.category ?? ''),
+    tags: row.tags != null ? String(row.tags) : undefined,
+    status: String(row.status ?? ''),
+    featured: Boolean(row.featured),
+    views: Number(row.views ?? 0),
+    created_at: row.created_at != null ? String(row.created_at) : '',
+    updated_at: row.updated_at != null ? String(row.updated_at) : '',
+  };
+}
+
 export class BlogService {
   async createBlog(data: CreateBlogRequest): Promise<BlogResponse> {
     try {
       logger.info('Creating blog post', { title: data.title, author: data.author });
-      
-      const blogId = createBlog(data);
-      const blog = getBlogBySlugAdmin(data.slug || '') as BlogResponse;
-      
+      const blogId = await createBlog(data);
+      const blog = toResponse((await getBlogById(Number(blogId))) as Row);
       if (!blog) {
         throw new AppError('Failed to retrieve created blog', 500);
       }
-
       logger.info('Blog created successfully', { blogId, slug: blog.slug });
       return blog;
     } catch (error) {
@@ -57,13 +86,12 @@ export class BlogService {
 
   async getBlogBySlug(slug: string, isAdmin: boolean = false): Promise<BlogResponse> {
     try {
-      const blog = isAdmin ? getBlogBySlugAdmin(slug) : getBlogBySlug(slug);
-      
+      const row = isAdmin ? await getBlogBySlugAdmin(slug) : await getBlogBySlug(slug);
+      const blog = toResponse(row as Row);
       if (!blog) {
         throw new NotFoundError('Blog post', { slug });
       }
-
-      return blog as BlogResponse;
+      return blog;
     } catch (error) {
       logger.error('Error fetching blog', { slug, error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
@@ -72,8 +100,8 @@ export class BlogService {
 
   async getAllBlogs(isAdmin: boolean = false): Promise<BlogResponse[]> {
     try {
-      const blogs = isAdmin ? getAllBlogsAdmin() : getAllBlogs();
-      return blogs as BlogResponse[];
+      const rows = isAdmin ? await getAllBlogsAdmin() : await getAllBlogs();
+      return (rows as Row[]).map((r) => toResponse(r)).filter((b): b is BlogResponse => b !== null);
     } catch (error) {
       logger.error('Error fetching blogs', { error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
@@ -83,19 +111,13 @@ export class BlogService {
   async approveBlog(id: number): Promise<BlogResponse> {
     try {
       logger.info('Approving blog', { blogId: id });
-      
-      approveBlog(id);
-      
-      // Get the updated blog
-      const blogs = getAllBlogsAdmin();
-      const blog = blogs.find(b => b.id === id);
-      
+      await approveBlog(id);
+      const blog = toResponse((await getBlogById(id)) as Row);
       if (!blog) {
         throw new NotFoundError('Blog post', { id });
       }
-
       logger.info('Blog approved successfully', { blogId: id, slug: blog.slug });
-      return blog as BlogResponse;
+      return blog;
     } catch (error) {
       logger.error('Error approving blog', { blogId: id, error: error instanceof Error ? error.message : 'Unknown error' });
       throw error;
@@ -105,9 +127,7 @@ export class BlogService {
   async deleteBlog(id: number): Promise<void> {
     try {
       logger.info('Deleting blog', { blogId: id });
-      
-      deleteBlog(id);
-      
+      await deleteBlog(id);
       logger.info('Blog deleted successfully', { blogId: id });
     } catch (error) {
       logger.error('Error deleting blog', { blogId: id, error: error instanceof Error ? error.message : 'Unknown error' });
@@ -117,10 +137,9 @@ export class BlogService {
 
   async incrementViews(slug: string): Promise<void> {
     try {
-      incrementBlogViews(slug);
+      await incrementBlogViews(slug);
     } catch (error) {
       logger.error('Error incrementing views', { slug, error: error instanceof Error ? error.message : 'Unknown error' });
-      // Don't throw error for view counting - it's not critical
     }
   }
 }

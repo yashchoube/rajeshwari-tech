@@ -24,7 +24,7 @@ async function EnquiriesPage() {
   let enquiries: Enquiry[] = [];
 
   try {
-    enquiries = getEnquiries() as unknown as Enquiry[];
+    enquiries = (await getEnquiries()) as unknown as Enquiry[];
   } catch (error) {
     console.error('Error fetching enquiries:', error);
   }

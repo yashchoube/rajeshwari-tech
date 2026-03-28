@@ -16,7 +16,7 @@ interface PageProps {
 
 async function AnalyticsDetails({ searchParams }: PageProps) {
     const page = typeof searchParams.page === 'string' ? searchParams.page : '/';
-    const data = getPageAnalytics(page);
+    const data = await getPageAnalytics(page);
 
     if (!data) {
         return (

@@ -117,8 +117,6 @@ async function AdminDashboard() {
   let analyticsHistory: any[] = [];
 
   try {
-    // Fetch all data from Neon database
-    const { getDashboardTrends } = await import('@/lib/database');
     demoBookings = (await getAllDemoBookings()) as DemoBooking[];
     enrollments = (await getAllEnrollments()) as Enrollment[];
     enquiries = (await getEnquiries()) as Enquiry[];

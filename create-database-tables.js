@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { Pool } from 'pg';
+// Database table creation script for Vercel Postgres
+const { Pool } = require('pg');
 
-// This API endpoint creates database tables in production
-// Call this once after deployment to set up your database
+// This script creates the necessary database tables
+// Run this once to set up your database
 
-export async function POST(request: NextRequest) {
+async function createTables() {
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    console.log('🔧 Creating database tables in production...');
+    console.log('🔧 Creating database tables...');
     
     // Create enrollments table
     await pool.query(`
@@ -98,57 +98,14 @@ export async function POST(request: NextRequest) {
     `);
     console.log('✅ Analytics table created');
 
-    // Create enquiries table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS enquiries (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL,
-        phone VARCHAR(20),
-        company VARCHAR(255),
-        service VARCHAR(255) NOT NULL,
-        message TEXT,
-        status VARCHAR(50) DEFAULT 'new',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    console.log('✅ Enquiries table created');
-
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS referrer_data (
-        id SERIAL PRIMARY KEY,
-        referrer VARCHAR(2048) NOT NULL,
-        page VARCHAR(512) NOT NULL,
-        visits INTEGER DEFAULT 1,
-        last_visit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (referrer, page)
-      )
-    `);
-    console.log('✅ referrer_data table created');
-
-    await pool.end();
+    console.log('🎉 All database tables created successfully!');
     
-    return NextResponse.json({
-      success: true,
-      message: 'All database tables created successfully!',
-      tables: [
-        'enrollments',
-        'demo_bookings', 
-        'blogs',
-        'newsletter_subscriptions',
-        'analytics',
-        'enquiries',
-        'referrer_data'
-      ]
-    });
-
   } catch (error) {
     console.error('❌ Error creating tables:', error);
+  } finally {
     await pool.end();
-    
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
   }
 }
+
+// Run the script
+createTables();

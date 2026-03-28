@@ -25,7 +25,7 @@ async function BookingsPage() {
     let bookings: DemoBooking[] = [];
 
     try {
-        bookings = getAllDemoBookings() as unknown as DemoBooking[];
+        bookings = (await getAllDemoBookings()) as unknown as DemoBooking[];
     } catch (error) {
         console.error('Error fetching bookings:', error);
     }
