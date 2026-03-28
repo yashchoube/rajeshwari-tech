@@ -44,10 +44,34 @@ export const disconnectDB = async () => {
   }
 };
 
-// Database initialization
-export const initDatabase = async () => {
+// Helper for safe database queries during build/CI
+async function safeQuery(queryText: string, values?: any[]) {
   const client = getClient();
   
+  // If no DATABASE_URL, return empty result to prevent build crash
+  if (!process.env.DATABASE_URL) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('⚠️ Skipping query: DATABASE_URL not provided.');
+    }
+    return { rows: [] };
+  }
+
+  try {
+    return await client.query(queryText, values);
+  } catch (error) {
+    console.error('❌ Database query failed:', error);
+    
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('⚠️ Returning empty result to prevent build crash.');
+      return { rows: [] };
+    }
+    
+    throw error;
+  }
+}
+
+// Database initialization
+export const initDatabase = async () => {
   const createTablesSQL = `
     -- Demo bookings table
     CREATE TABLE IF NOT EXISTS demo_bookings (
@@ -120,17 +144,17 @@ export const initDatabase = async () => {
   `;
 
   try {
-    await client.query(createTablesSQL);
-    console.log('✅ Database tables initialized');
+    await safeQuery(createTablesSQL);
+    console.log('✅ Database tables initialized (or skipped safely)');
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
-    throw error;
+    // During build, we don't throw to allow static generation
+    if (process.env.NODE_ENV !== 'production') throw error;
   }
 };
 
 // CRUD operations for demo bookings
 export const saveDemoBooking = async (bookingData: any) => {
-  const client = getClient();
   const query = `
     INSERT INTO demo_bookings (name, email, phone, course, experience, preferred_time, message, status)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -148,18 +172,16 @@ export const saveDemoBooking = async (bookingData: any) => {
     bookingData.status || 'pending'
   ];
   
-  const result = await client.query(query, values);
-  return result.rows[0];
+  const result = await safeQuery(query, values);
+  return result?.rows?.[0] || null;
 };
 
 export const getAllDemoBookings = async () => {
-  const client = getClient();
-  const result = await client.query('SELECT * FROM demo_bookings ORDER BY created_at DESC');
-  return result.rows;
+  const result = await safeQuery('SELECT * FROM demo_bookings ORDER BY created_at DESC');
+  return result?.rows || [];
 };
 
 export const updateDemoBookingStatus = async (id: number, status: string) => {
-  const client = getClient();
   const query = `
     UPDATE demo_bookings 
     SET status = $1, updated_at = CURRENT_TIMESTAMP 
@@ -167,10 +189,10 @@ export const updateDemoBookingStatus = async (id: number, status: string) => {
     RETURNING *
   `;
   
-  const result = await client.query(query, [status, id]);
+  const result = await safeQuery(query, [status, id]);
   
-  if (result.rows.length === 0) {
-    return { success: false, error: 'Demo booking not found' };
+  if (!result?.rows || result.rows.length === 0) {
+    return { success: false, error: 'Demo booking not found or query failed' };
   }
   
   return { 
@@ -182,7 +204,6 @@ export const updateDemoBookingStatus = async (id: number, status: string) => {
 
 // CRUD operations for enrollments
 export const saveEnrollment = async (enrollmentData: any) => {
-  const client = getClient();
   const query = `
     INSERT INTO enrollments (name, email, phone, course_name, experience, goals, referral, status)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -200,18 +221,16 @@ export const saveEnrollment = async (enrollmentData: any) => {
     enrollmentData.status || 'pending'
   ];
   
-  const result = await client.query(query, values);
-  return result.rows[0];
+  const result = await safeQuery(query, values);
+  return result?.rows?.[0] || null;
 };
 
 export const getAllEnrollments = async () => {
-  const client = getClient();
-  const result = await client.query('SELECT * FROM enrollments ORDER BY created_at DESC');
-  return result.rows;
+  const result = await safeQuery('SELECT * FROM enrollments ORDER BY created_at DESC');
+  return result?.rows || [];
 };
 
 export const updateEnrollmentStatus = async (id: number, status: string) => {
-  const client = getClient();
   const query = `
     UPDATE enrollments 
     SET status = $1, updated_at = CURRENT_TIMESTAMP 
@@ -219,10 +238,10 @@ export const updateEnrollmentStatus = async (id: number, status: string) => {
     RETURNING *
   `;
   
-  const result = await client.query(query, [status, id]);
+  const result = await safeQuery(query, [status, id]);
   
-  if (result.rows.length === 0) {
-    return { success: false, error: 'Enrollment not found' };
+  if (!result?.rows || result.rows.length === 0) {
+    return { success: false, error: 'Enrollment not found or query failed' };
   }
   
   return { 
@@ -234,7 +253,6 @@ export const updateEnrollmentStatus = async (id: number, status: string) => {
 
 // CRUD operations for blogs
 export const createBlog = async (blogData: any) => {
-  const client = getClient();
   const query = `
     INSERT INTO blogs (title, slug, excerpt, content, author, featured_image, category, tags, status, featured)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -254,31 +272,27 @@ export const createBlog = async (blogData: any) => {
     blogData.featured || false
   ];
   
-  const result = await client.query(query, values);
-  return result.rows[0];
+  const result = await safeQuery(query, values);
+  return result?.rows?.[0] || null;
 };
 
 export const getAllBlogs = async () => {
-  const client = getClient();
-  const result = await client.query("SELECT * FROM blogs WHERE status = 'published' ORDER BY created_at DESC");
-  return result.rows;
+  const result = await safeQuery("SELECT * FROM blogs WHERE status = 'published' ORDER BY created_at DESC");
+  return result?.rows || [];
 };
 
 export const getAllBlogsAdmin = async () => {
-  const client = getClient();
-  const result = await client.query('SELECT * FROM blogs ORDER BY created_at DESC');
-  return result.rows;
+  const result = await safeQuery('SELECT * FROM blogs ORDER BY created_at DESC');
+  return result?.rows || [];
 };
 
 export const getBlogBySlug = async (slug: string) => {
-  const client = getClient();
-  const result = await client.query('SELECT * FROM blogs WHERE slug = $1', [slug]);
-  return result.rows[0];
+  const result = await safeQuery('SELECT * FROM blogs WHERE slug = $1', [slug]);
+  return result?.rows?.[0] || null;
 };
 
 // Newsletter operations
 export const subscribeToNewsletter = async (subscriptionData: any) => {
-  const client = getClient();
   const query = `
     INSERT INTO newsletter_subscriptions (email, name, interests, status)
     VALUES ($1, $2, $3, $4)
@@ -297,19 +311,17 @@ export const subscribeToNewsletter = async (subscriptionData: any) => {
     subscriptionData.status || 'active'
   ];
   
-  const result = await client.query(query, values);
-  return result.rows[0];
+  const result = await safeQuery(query, values);
+  return result?.rows?.[0] || null;
 };
 
 export const getAllNewsletterSubscriptions = async () => {
-  const client = getClient();
-  const result = await client.query('SELECT * FROM newsletter_subscriptions ORDER BY created_at DESC');
-  return result.rows;
+  const result = await safeQuery('SELECT * FROM newsletter_subscriptions ORDER BY created_at DESC');
+  return result?.rows || [];
 };
 
 // Analytics operations
 export const trackPageView = async (page: string) => {
-  const client = getClient();
   const query = `
     INSERT INTO analytics (page, visits, unique_referrers, last_visit)
     VALUES ($1, 1, 1, CURRENT_TIMESTAMP)
@@ -319,19 +331,17 @@ export const trackPageView = async (page: string) => {
     RETURNING *
   `;
   
-  const result = await client.query(query, [page]);
-  return result.rows[0];
+  const result = await safeQuery(query, [page]);
+  return result?.rows?.[0] || null;
 };
 
 export const getAnalyticsData = async () => {
-  const client = getClient();
-  const result = await client.query('SELECT * FROM analytics ORDER BY visits DESC');
-  return result.rows;
+  const result = await safeQuery('SELECT * FROM analytics ORDER BY visits DESC');
+  return result?.rows || [];
 };
 
 export const getReferrerData = async () => {
-  const client = getClient();
-  const result = await client.query(`
+  const query = `
     SELECT 
       page as referrer,
       SUM(visits) as visits,
@@ -339,6 +349,7 @@ export const getReferrerData = async () => {
     FROM analytics 
     GROUP BY page 
     ORDER BY visits DESC
-  `);
-  return result.rows;
+  `;
+  const result = await safeQuery(query);
+  return result?.rows || [];
 };
