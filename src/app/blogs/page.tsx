@@ -12,6 +12,10 @@ import { getAllBlogs } from '@/lib/database';
 // Updated By: Himanshu
 // Updated Until: end of file
 // ----------------------
+
+/** DB-backed list: avoid static prerender issues with RSC + pooled Postgres on Vercel. */
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Blog - RajeshwariTech | Latest Articles & Tech Insights',
   description: 'Read our latest articles on programming, technology, career tips, and industry insights. Stay updated with the tech world.',

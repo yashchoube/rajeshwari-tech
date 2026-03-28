@@ -10,11 +10,11 @@ import Link from 'next/link';
 // Updated Until: end of file
 // ----------------------
 
-interface PageProps {
+interface AnalyticsDetailsProps {
     searchParams: { [key: string]: string | string[] | undefined };
 }
 
-async function AnalyticsDetails({ searchParams }: PageProps) {
+async function AnalyticsDetails({ searchParams }: AnalyticsDetailsProps) {
     const page = typeof searchParams.page === 'string' ? searchParams.page : '/';
     const data = await getPageAnalytics(page);
 
@@ -102,10 +102,16 @@ async function AnalyticsDetails({ searchParams }: PageProps) {
     );
 }
 
-export default function Page({ searchParams }: PageProps) {
+/** Next.js 15: searchParams is a Promise — must be awaited. */
+export default async function Page({
+    searchParams,
+}: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+    const sp = await searchParams;
     return (
         <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
-            <AnalyticsDetails searchParams={searchParams} />
+            <AnalyticsDetails searchParams={sp} />
         </Suspense>
     );
 }
